@@ -7,3 +7,4 @@ type Polling struct{
 	Item2 string
 }
 var Poll = map[int]*Polling{}
+ 
