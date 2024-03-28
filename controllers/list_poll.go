@@ -16,7 +16,7 @@ func AllList(e echo.Context) error {
 	}
 	defer db.Close()
 
-	rows, err := db.Query("SELECT poll_id, name FROM polling where poll_id = ?")
+	rows, err := db.Query("SELECT poll_id, title, item1, item2 FROM polling")
 	if err != nil {
 		return err
 	}
@@ -24,7 +24,7 @@ func AllList(e echo.Context) error {
 
 	for rows.Next() {
 		var polling models.Polling
-		if err := rows.Scan(&polling.Poll_id, &polling.Title, &polling.Title, &polling.Item1, &polling.Item2); err != nil {
+		if err := rows.Scan(&polling.Poll_id, &polling.Title, &polling.Item1, &polling.Item2); err != nil {
 			return err
 		}
 		PollList = append(PollList, &polling)
