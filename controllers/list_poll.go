@@ -3,14 +3,14 @@ package controllers
 import (
 	"api-polling/models"
 	"net/http"
-
+	"api-polling/routes"
 	"github.com/labstack/echo"
 )
 
 func AllList(e echo.Context) error {
 	var PollList []*models.Polling
 
-	db, err := models.Conn()
+	db, err := routes.Conn()
 	if err != nil {
 		return err
 	}
