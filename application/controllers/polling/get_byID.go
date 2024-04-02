@@ -27,7 +27,7 @@ func ByID(e echo.Context)error{
 	defer db.Close()
 	
 
-	err = db.QueryRow("SELECT pol_id, title, item1, item2 FROM polling WHERE poll_id = ?", id).Scan(&polling.Poll_id, &polling.Title,  &polling.Item1, &polling.Item2)
+	err = db.QueryRow("SELECT poll_id, title, item1, item2 FROM polling WHERE poll_id = ?", id).Scan(&polling.Poll_id, &polling.Title,  &polling.Item1, &polling.Item2)
 	if err != nil{
 		log.Println("Failed to execute query or no rows found:", err)
 		return echo.NewHTTPError(http.StatusNotFound, "Polling not found")

@@ -6,7 +6,5 @@ type Polling struct{
 	Item1 string `json:"item1"`
 	Item2 string `json:"item2"`
 }
-var Poll = map[int]*Polling{
 
-}
  

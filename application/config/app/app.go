@@ -1,11 +1,5 @@
 package app
 
-import (
-	"database/sql"
-	"fmt"
-	"log"
-)
-
 var Load config
 
 type config struct {
@@ -33,27 +27,11 @@ func init() {
 			Port: "9000",
 		},
 		Database: database{
-			Host:     "localhost",
+			Host:     "127.0.0.1",
 			Port:     "3306",
 			User:     "root",
 			Password: "",
 			Name:     "db_api",
 		},
-	}
-
-	// === Bootstraping initiation
-	initDatabase()
-}
-
-func initDatabase() {
-	dbConfig := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v", Load.Database.User, Load.Database.Password, Load.Database.Host, Load.Database.Port, Load.Database.Name)
-	db, err := sql.Open("mysql", dbConfig)
-	if err != nil {
-		log.Fatalln("Error connecting to database:", err)
-	}
-
-	err = db.Ping()
-	if err != nil {
-		log.Fatalln("Error connecting to database:", err)
 	}
 }
