@@ -11,6 +11,7 @@ func AppRoute() *echo.Echo {
 
 	e.GET("api/v1/polling", controllers.AllList)
 	e.GET("api/v1/polling/:id", controllers.ByID)
+	e.PUT("api/v1/polling", controllers.Update)
 	// e.POST("api/v1/polling",controllers.Create)
 	// e.GET("api/v1/polling/result", controllers.AllResult)
 
