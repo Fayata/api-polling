@@ -7,4 +7,13 @@ type Polling struct{
 	Item2 string `json:"item2"`
 }
 
- 
+// type PollingResponse struct {
+// 	ID    int             `json:"id"`
+// 	Title string          `json:"title"`
+// 	Items []*PollingItem `json:"item"`
+// }
+
+// type PollingItem struct {
+// 	Value string `json:"value"`
+// 	Label string `json:"label"`
+// }
