@@ -3,10 +3,8 @@ package controllers
 import (
 	"log"
 	"net/http"
-
 	"api-polling/application/models"
 	"api-polling/system/database"
-
 	"github.com/labstack/echo"
 )
 
@@ -23,8 +21,8 @@ func Create(e echo.Context) error {
 	}
 	defer db.Close()
 
-	query := "INSERT INTO polling (title, item1, item2) VALUES (?, ?, ?)"
-	_, err = db.Exec(query, newPoll.Title, newPoll.Item1, newPoll.Item2)
+	query := "INSERT INTO polling (title, item1, item2, item3, item4, item5) VALUES (?, ?, ?, ?, ?, ?)"
+	_, err = db.Exec(query, newPoll.Title, newPoll.Item1, newPoll.Item2, newPoll.Item3, newPoll.Item4, newPoll.Item5)
 	if err != nil {
 		log.Println("Gagal membuat polling baru:", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal membuat polling baru")

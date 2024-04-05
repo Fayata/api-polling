@@ -10,44 +10,44 @@ import (
 )
 
 func AllResult(e echo.Context) error {
-	var AllResults []*models.PollingResult
-
 	db, err := database.Conn()
 	if err != nil {
-		log.Println("Failed to connect to database:", err)
-		return err
+		log.Println("Gagal terhubung ke database:", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal terhubung ke database")
 	}
 	defer db.Close()
 
-	// Subquery untuk menghitung jumlah user yang memberikan suara
-	rows, err := db.Query(`
-        SELECT 
-            polling.title,
-            SUM(CASE WHEN result.vote = 1 THEN 1 ELSE 0 END) as item1_count,
-            SUM(CASE WHEN result.vote = 2 THEN 1 ELSE 0 END) as item2_count,
-            COUNT(DISTINCT result.user_id) as total_participants
-        FROM polling
-        LEFT JOIN result ON polling.poll_id = result.poll_id
-        LEFT JOIN user ON result.user_id = user.user_id
-        GROUP BY polling.poll_id
-    `)
+	// Query untuk mendapatkan hasil poling untuk setiap item dan total partisipant
+	query := `
+		SELECT 
+			p.title,
+			ROUND(SUM(CASE WHEN r.vote = 1 THEN 1 ELSE 0 END) / COUNT(r.user_id) * 100, 2) AS item1_percentage,
+			ROUND(SUM(CASE WHEN r.vote = 2 THEN 1 ELSE 0 END) / COUNT(r.user_id) * 100, 2) AS item2_percentage,
+			ROUND(SUM(CASE WHEN r.vote = 3 THEN 1 ELSE 0 END) / COUNT(r.user_id) * 100, 2) AS item3_percentage,
+			ROUND(SUM(CASE WHEN r.vote = 4 THEN 1 ELSE 0 END) / COUNT(r.user_id) * 100, 2) AS item4_percentage,
+			ROUND(SUM(CASE WHEN r.vote = 5 THEN 1 ELSE 0 END) / COUNT(r.user_id) * 100, 2) AS item5_percentage,
+			COUNT(r.user_id) AS total_participants
+		FROM result r
+		INNER JOIN polling p ON r.poll_id = p.poll_id
+		GROUP BY r.poll_id
+	`
+	rows, err := db.Query(query)
 	if err != nil {
-		log.Println("Failed to execute query:", err)
-		return err
+		log.Println("Gagal melakukan query:", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil data hasil polling")
 	}
 	defer rows.Close()
 
+	var pollingResults []*models.PollingResult
+
 	for rows.Next() {
-		var result models.PollingResult
-		if err := rows.Scan(&result.Title, &result.Item1Count, &result.Item2Count, &result.TotalParticipants); err != nil {
-			log.Println("Failed to scan row:", err)
-			return err
+		var pollingResult models.PollingResult
+		if err := rows.Scan(&pollingResult.Title, &pollingResult.Item1Percentage, &pollingResult.Item2Percentage, &pollingResult.Item3Percentage, &pollingResult.Item4Percentage, &pollingResult.Item5Percentage, &pollingResult.TotalParticipants); err != nil {
+			log.Println("Gagal memindai baris:", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memindai hasil polling")
 		}
-
-		result.Item1Percentage = float64(result.Item1Count) / float64(result.TotalParticipants) * 100
-		result.Item2Percentage = float64(result.Item2Count) / float64(result.TotalParticipants) * 100
-
-		AllResults = append(AllResults, &result)
+		pollingResults = append(pollingResults, &pollingResult)
 	}
-	return e.JSON(http.StatusOK, AllResults)
+
+	return e.JSON(http.StatusOK, pollingResults)
 }

@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-
 	"github.com/labstack/echo"
 )
 
@@ -30,7 +29,7 @@ func Update(e echo.Context)error{
 	}
 	defer db.Close()
 
-	u, err := db.Exec("UPDATE polling SET title = ?, item1 = ?, item2 = ? WHERE poll_id = ?", updatePoll.Title, updatePoll.Item1, updatePoll.Item2, id)
+	u, err := db.Exec("UPDATE polling SET title = ?, item1 = ?, item2 = ? WHERE poll_id = ?", updatePoll.Title, updatePoll.Item1, updatePoll.Item2, updatePoll.Item3, updatePoll.Item4, updatePoll.Item5, id)
 	if err != nil{
 		log.Println("Failed query:", err)
 		return err
@@ -42,6 +41,6 @@ func Update(e echo.Context)error{
 	}
 
 	return e.JSON(http.StatusOK, echo.Map{
-		"message": "Updsate successfully",
+		"message": "Update successfully",
 	})
 }
