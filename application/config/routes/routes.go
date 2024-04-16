@@ -2,8 +2,6 @@ package routes
 
 import (
 	"api-polling/application/controllers/polling"
-
-
 	"github.com/labstack/echo"
 )
 
