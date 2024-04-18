@@ -3,7 +3,6 @@ package models
 type Result struct {
 	ID          int `json:"id"`
 	Vote        int `json:"vote"`
-	Participant int `json:"particpiant"`
 	User_id     int `json:"user_id"`
 	Poll_id     int `json:"poll_id"`
 }
