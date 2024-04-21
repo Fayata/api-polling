@@ -23,27 +23,60 @@ func Result(c echo.Context) error {
 	}
 	defer db.Close()
 
-	// Query hasil poling untuk setiap item dan total participant
+	// Query untuk mendapatkan jumlah pemilih untuk setiap pilihan polling
 	query := `
-		SELECT p.title,
-			ROUND(SUM(CASE WHEN r.vote = 1 THEN 1 ELSE 0 END) / COUNT(DISTINCT r.user_id) * 100, 2) AS item1_percentage,
-			ROUND(SUM(CASE WHEN r.vote = 2 THEN 1 ELSE 0 END) / COUNT(DISTINCT r.user_id) * 100, 2) AS item2_percentage,
-			ROUND(SUM(CASE WHEN r.vote = 3 THEN 1 ELSE 0 END) / COUNT(DISTINCT r.user_id) * 100, 2) AS item3_percentage,
-			ROUND(SUM(CASE WHEN r.vote = 4 THEN 1 ELSE 0 END) / COUNT(DISTINCT r.user_id) * 100, 2) AS item4_percentage,
-			ROUND(SUM(CASE WHEN r.vote = 5 THEN 1 ELSE 0 END) / COUNT(DISTINCT r.user_id) * 100, 2) AS item5_percentage,
-			COUNT(DISTINCT r.user_id) AS total_participants
-		FROM result r
-		INNER JOIN polling p ON r.poll_id = p.poll_id
-		WHERE r.poll_id = ?
-		GROUP BY r.poll_id
+		SELECT pc.id, pc.poll_id, pc.option, COUNT(uc.user_id) as vote_count
+		FROM poll_choices pc
+		LEFT JOIN user_choice uc ON pc.id = uc.choice_id
+		WHERE pc.poll_id = ?
+		GROUP BY pc.id, pc.poll_id, pc.option
 	`
-	var pollingResult models.PollingResult
-
-	err = db.QueryRow(query, pollID).Scan(&pollingResult.Title, &pollingResult.Item1Percentage, &pollingResult.Item2Percentage, &pollingResult.Item3Percentage, &pollingResult.Item4Percentage, &pollingResult.Item5Percentage, &pollingResult.TotalParticipants)
+	rows, err := db.Query(query, pollID)
 	if err != nil {
-		log.Println("Gagal mendapatkan hasil polling:", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mendapatkan hasil polling")
+		log.Println("Gagal melakukan query:", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil hasil polling")
+	}
+	defer rows.Close()
+
+	var pollingResults []map[string]interface{}
+
+	for rows.Next() {
+		var choice models.PollChoices
+		var voteCount int
+		if err := rows.Scan(&choice.ID, &choice.Poll_id, &choice.Option, &voteCount); err != nil {
+			log.Println("Gagal memindai baris:", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memindai data hasil polling")
+		}
+		totalParticipants := getTotalParticipants(pollID) // Fungsi ini harus Anda definisikan untuk menghitung total peserta polling
+		percentage := float64(voteCount) / float64(totalParticipants) * 100
+
+		result := map[string]interface{}{
+			"poll_choice": map[string]interface{}{
+				"id":      choice.ID,
+				"poll_id": choice.Poll_id,
+				"option":  choice.Option,
+			},
+			"percentage": percentage,
+		}
+		pollingResults = append(pollingResults, result)
 	}
 
-	return c.JSON(http.StatusOK, pollingResult)
+	return c.JSON(http.StatusOK, pollingResults)
+}
+
+func getTotalParticipants(pollID int) int {
+	db, err := database.Conn()
+	if err != nil {
+        log.Println("Gagal terhubung ke database:", err)
+        return 0
+    }
+	defer db.Close()
+
+	var totalParticipants int
+	err = db.QueryRow("SELECT COUNT(*) FROM poll_choices WHERE poll_id =?", pollID).Scan(&totalParticipants)
+	if err != nil {
+        log.Println("Gagal menjalankan query:", err)
+        return 0
+    }
+	return totalParticipants
 }

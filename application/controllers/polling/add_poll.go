@@ -1,9 +1,7 @@
 package controllers
 
 import (
-	"api-polling/application/models"
 	"api-polling/system/database"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -11,37 +9,76 @@ import (
 )
 
 func AddPoll(c echo.Context) error {
+	// data request user
 	userID, err := strconv.Atoi(c.Param("user_id"))
 	if err != nil {
-		log.Println("Gagal mengkonversi user_id:", err)
-		return echo.NewHTTPError(http.StatusBadRequest, "user_id tidak valid")
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"data": nil,
+			"status": map[string]interface{}{
+				"message": "user_id tidak valid",
+				"code":    400,
+				"type":    "error",
+			},
+		})
 	}
 	pollID, err := strconv.Atoi(c.Param("poll_id"))
 	if err != nil {
-		log.Println("Gagal mengkonversi poll_id:", err)
-		return echo.NewHTTPError(http.StatusBadRequest, "poll_id tidak valid")
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"data": nil,
+			"status": map[string]interface{}{
+				"message": "poll_id tidak valid",
+				"code":    400,
+				"type":    "error",
+			},
+		})
 	}
-	vote := c.Param("vote")
-
-	var newPoll models.Result
-	if err := c.Bind(&newPoll); err != nil {
-		log.Println("Gagal melakukan binding data:", err)
-		return echo.NewHTTPError(http.StatusBadRequest, "Gagal melakukan binding data")
+	choiceID, err := strconv.Atoi(c.Param("choice_id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"data": nil,
+			"status": map[string]interface{}{
+				"message": "choice_id tidak valid",
+				"code":    400,
+				"type":    "error",
+			},
+		})
 	}
+	// Validasi data
 
 	db, err := database.Conn()
 	if err != nil {
-		log.Println("Gagal terhubung ke database:", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal terhubung ke database")
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"data": nil,
+			"status": map[string]interface{}{
+				"message": "Gagal terhubung ke database",
+				"code":    500,
+				"type":    "error",
+			},
+		})
 	}
 	defer db.Close()
 
-	queryInsert := "INSERT INTO result (vote, user_id, poll_id) VALUES (?, ?, ?)"
-	_, err = db.Exec(queryInsert, vote, userID, pollID)
+	query := "INSERT INTO user_choice (user_id, poll_id, choice_id) VALUES (?, ?, ?)"
+	_, err = db.Exec(query, userID, pollID, choiceID)
 	if err != nil {
-		log.Println("Gagal membuat hasil polling baru:", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal membuat hasil polling baru")
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"data": nil,
+			"status": map[string]interface{}{
+				"message": "Gagal menyimpan polling",
+				"code":    500,
+				"type":    "error",
+			},
+		})
 	}
 
-	return c.JSON(http.StatusCreated, "Polling berhasil ditambahkan")
+	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"data": map[string]interface{}{
+			"polling_id": pollID,
+		},
+		"status": map[string]interface{}{
+			"message": "submit berhasil",
+			"code":    0,
+			"type":    "success",
+		},
+	})
 }

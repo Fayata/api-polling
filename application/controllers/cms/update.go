@@ -29,7 +29,7 @@ func Update(e echo.Context)error{
 	}
 	defer db.Close()
 
-	u, err := db.Exec("UPDATE polling SET title = ?, item1 = ?, item2 = ?, item3 = ?, item4 = ?, item5 = ? WHERE poll_id = ?", updatePoll.Title, updatePoll.Item1, updatePoll.Item2, updatePoll.Item3, updatePoll.Item4, updatePoll.Item5, id)
+	u, err := db.Exec("UPDATE polling SET title = ?, choices =? WHERE poll_id = ?", updatePoll.Title, updatePoll.Choices, id)
 	if err != nil{
 		log.Println("Failed query:", err)
 		return err

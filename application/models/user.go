@@ -1,12 +1,11 @@
 package models
 
-
-
 type User struct{
-	User_id int 
-	Name string
-	Email string
+	User_id int `json:"user_id"`
+	Username string `json:"username"`
+	Email string `json:"email"`
+	Password string `json:"password"`
 }
 
-var Users = map[int]*User{}
-var Seq = 1 
+// var Users = map[int]*User{}
+// var Seq = 1 

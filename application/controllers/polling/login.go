@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-func Login(e echo.Context) error {
+func Login(c echo.Context) error {
 	// Membuat koneksi ke database
 	db, err := database.Conn()
 	if err != nil {
@@ -22,7 +22,7 @@ func Login(e echo.Context) error {
 	rows, err := db.Query(query)
 	if err != nil {
 		log.Println("Gagal melakukan query:", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil data pengguna")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil data user")
 	}
 	defer rows.Close()
 
@@ -30,12 +30,12 @@ func Login(e echo.Context) error {
 
 	for rows.Next() {
 		var user models.User
-		if err := rows.Scan(&user.User_id, &user.Name, &user.Email); err != nil {
+		if err := rows.Scan(&user.User_id, &user.Username, &user.Email); err != nil {
 			log.Println("Gagal memindai baris:", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memindai data pengguna")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memindai data user")
 		}
 		users = append(users, &user)
 	}
 
-	return e.JSON(http.StatusOK, users)
+	return c.JSON(http.StatusOK, users)
 }
