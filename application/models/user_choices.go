@@ -9,6 +9,7 @@ type UserChoice struct {
 	User_id int `json:"user_id"`
 }
 
+
 type PollingResult struct {
 	ChoiceID  int `json:"choice_id"`
 	VoteCount int `json:"vote_count"`
@@ -23,7 +24,7 @@ func (p *Polling) AddPoll(user_id int, choiceID int) error {
     }
     defer db.Close()
 
-    query := "INSERT INTO user_choice ( user_id, choice_id) VALUES ( ?, ?)"
+    query := "INSERT INTO user_choice (user_id, choice_id) VALUES ( ?, ?)"
     _, err = db.Exec(query, user_id, choiceID)
     if err != nil {
         log.Println("Failed to execute query:", err)
