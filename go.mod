@@ -4,6 +4,8 @@ go 1.21.5
 
 require github.com/labstack/echo v3.3.10+incompatible
 
+require github.com/dgrijalva/jwt-go v3.2.0+incompatible 
+
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/go-sql-driver/mysql v1.8.1

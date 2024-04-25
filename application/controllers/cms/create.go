@@ -21,8 +21,9 @@ func Create(e echo.Context) error {
 	}
 	defer db.Close()
 
-	query := "INSERT INTO polling (title, item1, item2, item3, item4, item5) VALUES (?, ?, ?, ?, ?, ?)"
-	_, err = db.Exec(query, newPoll.Title, newPoll.ID, newPoll.Title, newPoll.Choices)
+	query := "INSERT INTO polling (title) VALUES (?)"
+	query2 := "INSERT INTO poll_choices (option, poll_id) VALUES (?, ?)"
+	_, err = db.Exec(query, query2, newPoll.Title, newPoll.Choices)
 	if err != nil {
 		log.Println("Gagal membuat polling baru:", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal membuat polling baru")

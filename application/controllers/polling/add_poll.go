@@ -1,84 +1,53 @@
 package controllers
 
 import (
-	"api-polling/system/database"
+	"api-polling/application/models"
 	"net/http"
 	"strconv"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 )
 
-func AddPoll(c echo.Context) error {
-	// data request user
-	userID, err := strconv.Atoi(c.Param("user_id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"data": nil,
-			"status": map[string]interface{}{
-				"message": "user_id tidak valid",
-				"code":    400,
-				"type":    "error",
-			},
-		})
-	}
-	pollID, err := strconv.Atoi(c.Param("poll_id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"data": nil,
-			"status": map[string]interface{}{
-				"message": "poll_id tidak valid",
-				"code":    400,
-				"type":    "error",
-			},
-		})
-	}
-	choiceID, err := strconv.Atoi(c.Param("choice_id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]interface{}{
-			"data": nil,
-			"status": map[string]interface{}{
-				"message": "choice_id tidak valid",
-				"code":    400,
-				"type":    "error",
-			},
-		})
-	}
-	// Validasi data
+func AddPoll(e echo.Context) error {
+    // Parse data dari request
+    userID, _ := strconv.Atoi(e.Param("user_id"))
+    pollID, _ := strconv.Atoi(e.Param("poll_id"))
+    choiceID, _ := strconv.Atoi(e.Param("choice_id"))
 
-	db, err := database.Conn()
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"data": nil,
-			"status": map[string]interface{}{
-				"message": "Gagal terhubung ke database",
-				"code":    500,
-				"type":    "error",
-			},
-		})
-	}
-	defer db.Close()
 
-	query := "INSERT INTO user_choice (user_id, poll_id, choice_id) VALUES (?, ?, ?)"
-	_, err = db.Exec(query, userID, pollID, choiceID)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"data": nil,
-			"status": map[string]interface{}{
-				"message": "Gagal menyimpan polling",
-				"code":    500,
-				"type":    "error",
-			},
-		})
-	}
+    tokenCookie, err := e.Cookie("jwt_token")
+    if err != nil {
+        return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak ditemukan")
+    }
+    tokenString := tokenCookie.Value
 
-	return c.JSON(http.StatusCreated, map[string]interface{}{
-		"data": map[string]interface{}{
-			"polling_id": pollID,
-		},
-		"status": map[string]interface{}{
-			"message": "submit berhasil",
-			"code":    0,
-			"type":    "success",
-		},
-	})
+    // Parse dan verifikasi token JWT
+    token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+        return []byte("secret"), nil
+    })
+    if err != nil || !token.Valid {
+        return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak valid")
+    }
+
+    // Create polling instance
+    polling := models.Polling{}
+
+    // Add poll
+    if err := polling.AddPoll(userID, choiceID); err != nil {
+        return echo.NewHTTPError(http.StatusInternalServerError, "Gagal melakukan polling")
+    }
+
+    return e.JSON(http.StatusCreated, map[string]interface{}{
+        "data": map[string]interface{}{
+            "user_id":  userID,
+            "poll_id":  pollID,
+            "choice_id": choiceID,
+        },
+        "status": map[string]interface{}{
+            "message": "Polling berhasil",
+            "code":    http.StatusOK,
+            "type":    "success",
+        },
+    })
 }

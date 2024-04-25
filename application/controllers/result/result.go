@@ -10,8 +10,8 @@ import (
 	"github.com/labstack/echo"
 )
 
-func Result(c echo.Context) error {
-	pollID, err := strconv.Atoi(c.Param("poll_id"))
+func Result(e echo.Context) error {
+	pollID, err := strconv.Atoi(e.Param("poll_id"))
 	if err != nil {
 		log.Println("Gagal mengkonversi poll_id:", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "poll_id tidak valid")
@@ -25,11 +25,11 @@ func Result(c echo.Context) error {
 
 	// Query untuk mendapatkan jumlah pemilih untuk setiap pilihan polling
 	query := `
-		SELECT pc.id, pc.poll_id, pc.option, COUNT(uc.user_id) as vote_count
+		SELECT pc.id, pc.poll_id, pc.title, pc.option, COUNT(uc.user_id) as vote_count
 		FROM poll_choices pc
 		LEFT JOIN user_choice uc ON pc.id = uc.choice_id
 		WHERE pc.poll_id = ?
-		GROUP BY pc.id, pc.poll_id, pc.option
+		GROUP BY pc.id, pc.poll_id,pc.title, pc.option
 	`
 	rows, err := db.Query(query, pollID)
 	if err != nil {
@@ -41,9 +41,10 @@ func Result(c echo.Context) error {
 	var pollingResults []map[string]interface{}
 
 	for rows.Next() {
+	
 		var choice models.PollChoices
 		var voteCount int
-		if err := rows.Scan(&choice.ID, &choice.Poll_id, &choice.Option, &voteCount); err != nil {
+		if err := rows.Scan(&choice.ID, &choice.Poll_id, &choice.Title, &choice.Option, &voteCount); err != nil {
 			log.Println("Gagal memindai baris:", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memindai data hasil polling")
 		}
@@ -55,28 +56,29 @@ func Result(c echo.Context) error {
 				"id":      choice.ID,
 				"poll_id": choice.Poll_id,
 				"option":  choice.Option,
+				"title": choice.Title,
 			},
 			"percentage": percentage,
 		}
 		pollingResults = append(pollingResults, result)
 	}
 
-	return c.JSON(http.StatusOK, pollingResults)
+	return e.JSON(http.StatusOK, pollingResults)
 }
 
 func getTotalParticipants(pollID int) int {
 	db, err := database.Conn()
 	if err != nil {
-        log.Println("Gagal terhubung ke database:", err)
-        return 0
-    }
+		log.Println("Gagal terhubung ke database:", err)
+		return 0
+	}
 	defer db.Close()
 
 	var totalParticipants int
 	err = db.QueryRow("SELECT COUNT(*) FROM poll_choices WHERE poll_id =?", pollID).Scan(&totalParticipants)
 	if err != nil {
-        log.Println("Gagal menjalankan query:", err)
-        return 0
-    }
+		log.Println("Gagal menjalankan query:", err)
+		return 0
+	}
 	return totalParticipants
 }
