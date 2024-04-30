@@ -1,11 +1,12 @@
 package controllers
 
 import (
-    "api-polling/application/models"
-    "github.com/labstack/echo"
-    "net/http"
+	"api-polling/application/models"
+	"net/http"
+	"github.com/labstack/echo"
 )
 
+// AddPoll menangani penambahan polling baru
 func AddPoll(e echo.Context) error {
     var userChoice models.UserChoice
     if err := e.Bind(&userChoice); err != nil {

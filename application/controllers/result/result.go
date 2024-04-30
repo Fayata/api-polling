@@ -9,7 +9,7 @@ import (
 )
 
 func Result(e echo.Context) error {
-    pollID, err := strconv.Atoi(e.Param("id"))
+    pollID, err := strconv.Atoi(e.Param("poll_id"))
     if err != nil {
         log.Println("Gagal mengkonversi poll_id:", err)
         return echo.NewHTTPError(http.StatusBadRequest, "poll_id tidak valid")

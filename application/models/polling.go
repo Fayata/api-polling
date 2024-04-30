@@ -10,13 +10,29 @@ type Polling struct {
     Title   string       `json:"title"`
     Choices []PollChoice `json:"choices"`
 }
-
 type PollChoice struct {
     ID     int    `json:"id"`
     Option string `json:"option"`
 }
+// func (up *Polling) GetByID(id int) error {
+//     db, err := database.Conn()
+//     if err != nil {
+//         log.Println("Gagal terhubung ke database:", err)
+//         return err
+//     }
+//     defer db.Close()
 
-//Menampilkan polling berdasarkan id
+//     query := `
+//         SELECT id, title FROM polling WHERE id = ?
+//     `
+//     err = db.QueryRow(query, up.ID).Scan(&up.ID, &up.Title)
+//     if err != nil {
+//         log.Println("Gagal mengeksekusi query atau tidak ada baris yang ditemukan:", err)
+//         return err
+//     }
+
+//     return nil
+// }
 func (p *Polling) GetByID(id int) error {
     db, err := database.Conn()
     if err != nil {
@@ -31,46 +47,25 @@ func (p *Polling) GetByID(id int) error {
         log.Println("Failed to execute query or no rows found:", err)
         return err
     }
-
-    // Get choices for this polling
-    rows, err := db.Query("SELECT id, option FROM poll_choices WHERE poll_id = ?", p.ID)
-    if err != nil {
-        log.Println("Failed to execute query for choices:", err)
-        return err
-    }
-    defer rows.Close()
-
-    for rows.Next() {
-        var choice PollChoice
-        if err := rows.Scan(&choice.ID, &choice.Option); err != nil {
-            log.Println("Failed to read row from query result:", err)
-            continue
-        }
-        p.Choices = append(p.Choices, choice)
-    }
-
-    if err := rows.Err(); err != nil {
-        log.Println("Failed to read all rows from query result:", err)
-        return err
-    }
-
     return nil
 }
 
-//Menampilkan semua Polling
-func (p *Polling) GetAll() ([]Polling, error) {
+func (up *Polling) GetAll() ([]Polling, error) {
     var polls []Polling
 
     db, err := database.Conn()
     if err != nil {
-        log.Println("Failed to connect to database:", err)
+        log.Println("Gagal terhubung ke database:", err)
         return polls, err
     }
     defer db.Close()
 
-    rows, err := db.Query("SELECT id, title FROM polling")
+    query := `
+        SELECT id, title FROM polling
+    `
+    rows, err := db.Query(query)
     if err != nil {
-        log.Println("Failed to execute query:", err)
+        log.Println("Gagal mengeksekusi query:", err)
         return polls, err
     }
     defer rows.Close()
@@ -78,16 +73,18 @@ func (p *Polling) GetAll() ([]Polling, error) {
     for rows.Next() {
         var poll Polling
         if err := rows.Scan(&poll.ID, &poll.Title); err != nil {
-            log.Println("Failed to read row from query result:", err)
+            log.Println("Gagal membaca baris dari hasil query:", err)
             continue
         }
         polls = append(polls, poll)
     }
 
     if err := rows.Err(); err != nil {
-        log.Println("Failed to read all rows from query result:", err)
+        log.Println("Gagal membaca semua baris dari hasil query:", err)
         return polls, err
     }
 
     return polls, nil
 }
+
+

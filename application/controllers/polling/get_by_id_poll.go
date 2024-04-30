@@ -12,6 +12,7 @@ func ByID(e echo.Context) error {
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "ID tidak valid")
     }
+
     var polling models.Polling
 
     // Get polling by ID
@@ -19,5 +20,6 @@ func ByID(e echo.Context) error {
     if err != nil {
         return echo.NewHTTPError(http.StatusNotFound, "Polling tidak ditemukan")
     }
+
     return e.JSON(http.StatusOK, polling)
 }
