@@ -13,8 +13,11 @@ func AddPoll(e echo.Context) error {
         return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
     }
 
-    if err := userChoice.AddPoll(); err != nil {
-        return echo.NewHTTPError(http.StatusInternalServerError, "Failed to add poll")
+    userID := e.Get("user_id").(int)
+	userChoice.User_id = userID
+
+    if err := userChoice.AddPoll(e); err != nil {
+        return echo.NewHTTPError(http.StatusInternalServerError, "Polling hanya bisa sekali yah")
     }
 
     response := map[string]interface{}{

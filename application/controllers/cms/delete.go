@@ -4,9 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-
 	"api-polling/system/database"
-
 	"github.com/labstack/echo"
 )
 
@@ -26,14 +24,14 @@ func Delete(e echo.Context) error {
 	defer db.Close()
 
 	// Menghapus terlebih dahulu semua hasil yang terkait dengan polling
-	_, err = db.Exec("DELETE FROM result WHERE poll_id=?", id)
+	_, err = db.Exec("DELETE FROM poll_choices WHERE id=?", id)
 	if err != nil {
 		log.Println("Gagal menghapus hasil polling:", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal menghapus hasil polling")
 	}
 
 	// Kemudian hapus baris polling dari tabel polling
-	_, err = db.Exec("DELETE FROM polling WHERE poll_id=?", id)
+	_, err = db.Exec("DELETE FROM polling WHERE id=?", id)
 	if err != nil {
 		log.Println("Gagal menghapus data polling:", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal menghapus data polling")

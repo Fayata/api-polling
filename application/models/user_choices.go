@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log"
 	"sync"
+
+	"github.com/labstack/echo"
 )
 
 type UserChoice struct {
@@ -14,13 +16,17 @@ type UserChoice struct {
 	// Poll_id   int `json:"poll_id"`
 }
 
-func (uc *UserChoice) AddPoll() error {
+func (uc *UserChoice) AddPoll(e echo.Context) error {
 	db, err := database.Conn()
 	if err != nil {
 		log.Println("Gagal terhubung ke database:", err)
 		return err
 	}
 	defer db.Close()
+
+	// Mendapatkan user_id dari JWT token
+	userID := e.Get("user_id").(int)
+	uc.User_id = userID
 
 	var wg sync.WaitGroup
 	errChan := make(chan error, 1)
@@ -71,6 +77,5 @@ func (uc *UserChoice) AddPoll() error {
 			return err
 		}
 	}
-
 	return nil
 }

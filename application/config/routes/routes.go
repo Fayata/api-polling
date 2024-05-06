@@ -21,6 +21,6 @@ func AppRoute() *echo.Echo {
 	e.GET("api/v1/polling/all", controllers_polling.AllList, middleware.JWTMiddleware)
 	e.GET("api/v1/polling/:id", controllers_polling.ByID, middleware.JWTMiddleware)
 	e.POST("api/v1/polling/:id", controllers_polling.AddPoll, middleware.JWTMiddleware)
-	e.GET("api/v1/polling/leaderboard/:poll_id", controllers_result.Result, middleware.JWTMiddleware)
+	e.GET("api/v1/polling/:poll_id/leaderboard", controllers_result.Result, middleware.JWTMiddleware)
 	return e
 }
