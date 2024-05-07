@@ -1,0 +1,7 @@
+version: '3'
+
+services:
+  api-polling:
+    build: .
+    ports:
+      - "9000:9000"  # Expose port 8080 of the container to port 8080 of the host
