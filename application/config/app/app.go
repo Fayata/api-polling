@@ -27,8 +27,8 @@ func init() {
 			Port: "9000",
 		},
 		Database: database{
-			Host:     "127.0.0.1",
-			Port:     "3306",
+			Host:     "127.7.0.1",
+			Port:     "3307",
 			User:     "root",
 			Password: "",
 			Name:     "db_api",
