@@ -1,41 +1,23 @@
 package controllers
 
 import (
-	"log"
-	"net/http"
-	"strconv"
-	"api-polling/system/database"
-	"github.com/labstack/echo"
+    "api-polling/application/models"
+    "github.com/labstack/echo"
+    "net/http"
+    "strconv"
 )
 
 func Delete(e echo.Context) error {
-	id, err := strconv.Atoi(e.Param("id"))
-	if err != nil {
-		log.Println("Gagal mengonversi ID menjadi integer:", err)
-		return echo.NewHTTPError(http.StatusBadRequest, "ID tidak valid")
-	}
+    id, err := strconv.Atoi(e.Param("id"))
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, "ID tidak valid")
+    }
 
-	// Membuat koneksi ke database
-	db, err := database.Conn()
-	if err != nil {
-		log.Println("Gagal terhubung ke database:", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal terhubung ke database")
-	}
-	defer db.Close()
+    var poll models.Polling
+    err = poll.Delete(id)
+    if err != nil {
+        return echo.NewHTTPError(http.StatusInternalServerError, "Gagal menghapus data polling")
+    }
 
-	// Menghapus terlebih dahulu semua hasil yang terkait dengan polling
-	_, err = db.Exec("DELETE FROM poll_choices WHERE id=?", id)
-	if err != nil {
-		log.Println("Gagal menghapus hasil polling:", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal menghapus hasil polling")
-	}
-
-	// Kemudian hapus baris polling dari tabel polling
-	_, err = db.Exec("DELETE FROM polling WHERE id=?", id)
-	if err != nil {
-		log.Println("Gagal menghapus data polling:", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal menghapus data polling")
-	}
-
-	return e.NoContent(http.StatusOK)
+    return e.NoContent(http.StatusOK)
 }
