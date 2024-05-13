@@ -4,7 +4,7 @@ import (
 	controllers_cms "api-polling/application/controllers/cms"
 	controllers_polling "api-polling/application/controllers/polling"
 	controllers_result "api-polling/application/controllers/result"
-	middleware "api-polling/application/middleware"
+	// middleware "api-polling/application/middleware"
 
 	"github.com/labstack/echo"
 )
@@ -18,9 +18,9 @@ func AppRoute() *echo.Echo {
 	e.DELETE("api/v1/cms/polling/:id", controllers_cms.Delete)
 	e.POST("api/v1/cms/polling", controllers_cms.Create)
 	//Users
-	e.GET("api/v1/polling/all", controllers_polling.AllList, middleware.JWTMiddleware)
-	e.GET("api/v1/polling/:id", controllers_polling.ByID, middleware.JWTMiddleware)
-	e.POST("api/v1/polling/:id", controllers_polling.AddPoll, middleware.JWTMiddleware)
-	e.GET("api/v1/polling/:poll_id/leaderboard", controllers_result.Result, middleware.JWTMiddleware)
+	e.GET("api/v1/polling/all", controllers_polling.AllList)
+	e.GET("api/v1/polling/:id", controllers_polling.ByID)
+	e.POST("api/v1/polling/:id", controllers_polling.AddPoll)
+	e.GET("api/v1/polling/:poll_id/leaderboard", controllers_result.Result)
 	return e
 }
