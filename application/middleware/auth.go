@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
+	"github.com/labstack/echo/middleware"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 )
@@ -18,6 +18,12 @@ func getEnv(key, defaultValue string) string {
 		return defaultValue
 	}
 	return val
+}
+func SetCORS(e *echo.Echo) {
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
+	}))
 }
 
 func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {

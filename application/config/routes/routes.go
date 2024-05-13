@@ -11,6 +11,7 @@ import (
 
 func AppRoute() *echo.Echo {
 	e := echo.New()
+	middleware.SetCORS(e)
 
 	e.POST("api/v1/polling/login", controllers_polling.Login)
 	//Admin routes
@@ -18,9 +19,9 @@ func AppRoute() *echo.Echo {
 	e.DELETE("api/v1/cms/polling/:id", controllers_cms.Delete)
 	e.POST("api/v1/cms/polling", controllers_cms.Create)
 	//Users
-	e.GET("api/v1/polling/all", controllers_polling.AllList, middleware.JWTMiddleware)
-	e.GET("api/v1/polling/:id", controllers_polling.ByID, middleware.JWTMiddleware)
-	e.POST("api/v1/polling/:id", controllers_polling.AddPoll, middleware.JWTMiddleware)
-	e.GET("api/v1/polling/:poll_id/leaderboard", controllers_result.Result, middleware.JWTMiddleware)
+	e.GET("api/v1/polling/all", controllers_polling.AllList)                //, middleware.JWTMiddleware)
+	e.GET("api/v1/polling/:id", controllers_polling.ByID)                   //, middleware.JWTMiddleware)
+	e.POST("api/v1/polling/:id", controllers_polling.AddPoll)               //, middleware.JWTMiddleware)
+	e.GET("api/v1/polling/:poll_id/leaderboard", controllers_result.Result) //, middleware.JWTMiddleware)
 	return e
 }
