@@ -23,8 +23,8 @@ type UserChoices struct {
 }
 
 type PollingResult struct {
-	ChoiceID   int     `json:"choice_id"`
-	VoteCount  int     `json:"vote_count"`
+	ChoiceID  int `json:"choice_id"`
+	VoteCount int `json:"vote_count"`
 }
 
 // Fungsi untuk mendapatkan hasil polling berdasarkan ID polling

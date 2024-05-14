@@ -13,7 +13,7 @@ func AppRoute() *echo.Echo {
 	e := echo.New()
 	middleware.SetCORS(e)
 
-	e.POST("api/v1/polling/login", controllers_polling.Login)
+	e.POST("api/v1/login", controllers_polling.Login)
 	//Admin routes
 	e.PUT("api/v1/cms/polling/:id", controllers_cms.Update)
 	e.DELETE("api/v1/cms/polling/:id", controllers_cms.Delete)
@@ -22,6 +22,6 @@ func AppRoute() *echo.Echo {
 	e.GET("api/v1/polling/all", controllers_polling.AllList) //, middleware.JWTMiddleware)
 	e.GET("api/v1/polling/:id", controllers_polling.ByID)    //, middleware.JWTMiddleware)
 	e.POST("api/v1/polling/:id", controllers_polling.AddPoll, middleware.JWTMiddleware)
-	e.GET("api/v1/polling/:poll_id/leaderboard", controllers_result.Result) //, middleware.JWTMiddleware)
+	e.GET("api/v1/polling/:poll_id/leaderboard", controllers_result.Result, middleware.JWTMiddleware)
 	return e
 }
