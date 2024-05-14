@@ -4,6 +4,7 @@ import (
 	"api-polling/application/models"
 	"net/http"
 	"os"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 )
@@ -49,7 +50,6 @@ func Login(e echo.Context) error {
 
 	response := map[string]interface{}{
 		"access_token": tokenString,
-		"user_id":      user.ID,
 	}
 
 	return e.JSON(http.StatusOK, response)

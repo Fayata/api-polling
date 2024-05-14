@@ -27,10 +27,10 @@ func init() {
 			Port: "9000",
 		},
 		Database: database{
-			Host:     "127.19.0.1",
+			Host:     "172.19.0.1",
 			Port:     "3307",
 			User:     "root",
-			Password: "",
+			Password: "root",
 			Name:     "db_api",
 		},
 	}

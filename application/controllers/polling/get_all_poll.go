@@ -18,5 +18,9 @@ func AllList(e echo.Context) error {
         return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mendapatkan semua polling")
     }
 
-    return e.JSON(http.StatusOK, polls)
+    response := map[string]interface{}{
+        "data": polls,
+    }
+
+    return e.JSON(http.StatusOK, response)
 }
