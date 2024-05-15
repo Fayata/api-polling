@@ -3,6 +3,7 @@ package controllers
 import (
 	"api-polling/application/models"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo"
 )
@@ -15,6 +16,12 @@ func AddPoll(e echo.Context) error {
 
 	userID := e.Get("user_id").(int)
 	userChoice.User_id = userID
+
+	pollID, err := strconv.Atoi(e.Param("id"))
+	if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, "Invalid poll_id")
+    }
+    userChoice.Poll_id = pollID
 
 	if err := userChoice.AddPoll(e); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Polling hanya bisa sekali yah")

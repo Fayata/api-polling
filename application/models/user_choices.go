@@ -12,7 +12,7 @@ type UserChoice struct {
 	ID        int `json:"id"`
 	Choice_ID int `json:"choice_id"`
 	User_id   int `json:"user_id"`
-	// Poll_id   int `json:"poll_id"`
+	Poll_id   int `json:"poll_id"`
 }
 
 func (uc *UserChoice) AddPoll(e echo.Context) error {
@@ -31,9 +31,9 @@ func (uc *UserChoice) AddPoll(e echo.Context) error {
 	uc.User_id = userID
 
 	// Check if the user has already polled
-	checkQuery := `SELECT COUNT(*) FROM user_choice WHERE user_id = ?`
+	checkQuery := `SELECT COUNT(*) FROM user_choice WHERE user_id = ? AND poll_id = ?`
 	var count int
-	err = db.QueryRow(checkQuery, uc.User_id).Scan(&count)
+	err = db.QueryRow(checkQuery, uc.User_id, uc.Poll_id).Scan(&count)
 	if err != nil {
 		log.Println("Failed to check polling status:", err)
 		return err
@@ -43,8 +43,8 @@ func (uc *UserChoice) AddPoll(e echo.Context) error {
 	}
 
 	// Insert poll record
-	insertQuery := `INSERT INTO user_choice (choice_id, user_id) VALUES (?, ?)`
-	_, err = db.Exec(insertQuery, uc.Choice_ID, uc.User_id)
+	insertQuery := `INSERT INTO user_choice (choice_id, user_id, poll_id) VALUES (?, ?, ?)`
+	_, err = db.Exec(insertQuery, uc.Choice_ID, uc.User_id, uc.Poll_id)
 	if err != nil {
 		log.Println("Failed to add poll:", err)
 		return err
