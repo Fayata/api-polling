@@ -1,17 +1,39 @@
 package main
 
-import(
-	"api-polling/controllers"
-	
-	"github.com/labstack/echo"
+import (
+    "fmt"
+    "log"
+
+    "api-polling/application/config/app"
+    "api-polling/application/config/routes"
+    "api-polling/application/models"
+    "api-polling/system/database"
+    "github.com/joho/godotenv"
 )
 
-func main(){
-	e := echo.New()
+func main() {
+    // Load .env file
+    err := godotenv.Load()
+    if err != nil {
+        log.Fatal("Error loading .env file")
+    }
 
-	e.GET("api/v1/polling", controllers.AllList)
-	// e.POST("api/v1/polling",controllers.Create)
-	e.GET("api/v1/polling/result", controllers.AllResult)
+    // Initialize database connection
+    database.InitDB()
 
-	e.Logger.Fatal(e.Start(":9000"))
+    // AutoMigrate models
+    err = database.GetDB().AutoMigrate(
+        &models.User{},
+        &models.Polling{},
+        &models.PollChoice{},
+        &models.UserChoice{},
+    )
+    if err != nil {
+        log.Fatal("Error migrating database:", err)
+    }
+
+    webServer := routes.AppRoute()
+    webServerConfig := fmt.Sprintf("%v:%v",app.Load.WebServer.Host, app.Load.WebServer.Port)
+    webServer.Logger.Fatal(webServer.Start(webServerConfig))
 }
+
