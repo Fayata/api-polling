@@ -9,14 +9,14 @@ import (
 
 type Polling struct {
 	gorm.Model
-	Title   string       `json:"title" gorm:"size:255"`
-	Choices []PollChoice `json:"choices" gorm:"foreignKey:PollID"`
+	Title   string       `gorm:"column:title"`
+	Choices []PollChoice `gorm:"foreignKey:poll_id"`
 }
 
 type PollChoice struct {
 	gorm.Model
-	Option string `json:"option" gorm:""`
-	PollID uint
+	Option string `gorm:"column:option"`
+	PollID int `gorm:"column:poll_id"`
 }
 
 ///////////////////CMS////////////////////
@@ -59,7 +59,7 @@ func (p *Polling) Update(id int) error {
 
 func (p *Polling) Delete(id int) error {
 	db := database.GetDB()
-	if err := db.Where("poll_id = ?", id).Delete(&PollChoice{}).Error; err != nil { // Hapus pilihan terkait
+	if err := db.Where("poll_id = ?", id).Delete(&PollChoice{}).Error; err != nil {
 		return err
 	}
 

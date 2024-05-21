@@ -9,10 +9,10 @@ import (
 
 type User struct {
     gorm.Model 
-    Username string `gorm:"size:255"`
-    Email    string `gorm:"size:255"`
-    Password string `gorm:"size:255"`
-    Token    string `gorm:"size:255"`
+    Username string `gorm:"size:255;column:username"`
+    Email    string `gorm:"size:255;column:email"`
+    Password string `gorm:"size:255;columna;password"`
+    Token    string `gorm:"size:255;column:token"`
 }
 
 func (u *User) Login(email string, password string) (*User, error) {

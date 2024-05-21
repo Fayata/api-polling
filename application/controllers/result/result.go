@@ -11,7 +11,7 @@ import (
 
 func Result(e echo.Context) error {
 	pollIDStr := e.Param("poll_id")
-	pollID, err := strconv.ParseUint(pollIDStr, 10, 64)
+	pollID, err := strconv.Atoi(pollIDStr)
 	if err != nil {
 		log.Println("Gagal mengkonversi poll_id:", err)
 		return echo.NewHTTPError(http.StatusBadRequest, "poll_id tidak valid")
