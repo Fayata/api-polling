@@ -8,23 +8,30 @@ import (
 )
 
 type User struct {
-    gorm.Model 
-    Username string `gorm:"size:255;column:username"`
-    Email    string `gorm:"size:255;column:email"`
-    Password string `gorm:"size:255;columna;password"`
-    Token    string `gorm:"size:255;column:token"`
+	gorm.Model
+	Username string `gorm:"unique"`
+	Email    string `gorm:"unique"`
+	Password string
+	Token    string
 }
 
 func (u *User) Login(email string, password string) (*User, error) {
-    db := database.GetDB()
-    var user User
-    err := db.Where("email = ? AND password = ?", email, password).First(&user).Error
-    if err != nil {
-        log.Println("Gagal melakukan login:", err)
-        return nil, err
-    }
-    return &user, nil
+	db := database.GetDB()
+	var user User
+	err := db.Where("email = ? AND password = ?", email, password).First(&user).Error
+	if err != nil {
+		log.Println("Gagal melakukan login:", err)
+		return nil, err
+	}
+	return &user, nil
 }
+
+func (u *User) IsTokenValid(token string) bool {
+	db := database.GetDB()
+	err := db.Where("id = ? AND token = ?", u.ID, token).First(u).Error
+	return err == nil
+}
+
 
 
 // func (u *User) Register() error {

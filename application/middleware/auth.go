@@ -1,16 +1,21 @@
-package middlewares
+package middleware
 
 import (
 	"log"
 	"net/http"
 	"os"
 	"strings"
-	"github.com/labstack/echo/middleware"
+
+	"api-polling/application/models"
+	"api-polling/system/database"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+	"gorm.io/gorm"
 )
 
-var jwtSecret = []byte(getEnv("jwt_secret", "default_secret"))
+var jwtSecret = []byte(getEnv("JWT_SECRET", "default_secret"))
 
 func getEnv(key, defaultValue string) string {
 	val, exists := os.LookupEnv(key)
@@ -19,6 +24,7 @@ func getEnv(key, defaultValue string) string {
 	}
 	return val
 }
+
 func SetCORS(e *echo.Echo) {
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
@@ -56,6 +62,17 @@ func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			log.Println("Format klaim user_id tidak valid")
 			return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak valid")
 		}
+
+		// Pengecekan keberadaan user di database
+		var user models.User
+		if err := database.GetDB().First(&user, uint(userID)).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return echo.NewHTTPError(http.StatusUnauthorized, "User tidak ditemukan")
+			}
+			log.Println("Error saat mengambil data user:", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Terjadi kesalahan")
+		}
+
 		e.Set("user_id", int(userID))
 
 		return next(e)

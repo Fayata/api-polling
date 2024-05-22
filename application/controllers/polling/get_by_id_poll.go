@@ -1,14 +1,16 @@
 package controllers
 
 import (
-    "api-polling/application/models"
-    "github.com/labstack/echo"
-    "net/http"
-    "strconv"
+	"api-polling/application/models"
+	"api-polling/system/database"
+	"net/http"
+	"strconv"
+
+	"github.com/labstack/echo"
 )
 
 func ByID(e echo.Context) error {
-   id, err := strconv.Atoi(e.Param("id"))
+    id, err := strconv.Atoi(e.Param("id"))
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "ID tidak valid")
     }
@@ -16,10 +18,48 @@ func ByID(e echo.Context) error {
     var polling models.Polling
 
     // Get polling by ID
-    err = polling.GetByID(id)
+    err = database.GetDB().Preload("Choices").Preload("Banner").First(&polling, id).Error
     if err != nil {
         return echo.NewHTTPError(http.StatusNotFound, "Polling tidak ditemukan")
     }
 
-    return e.JSON(http.StatusOK, polling)
+    // Check if poll is submitted and ended
+    isSubmitted, isEnded, err := polling.CheckPollStatus(e)
+    if err != nil {
+        return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memeriksa status polling")
+    }
+
+    totalQuestions := 1
+    currentQuestion := 1
+
+    // Format response sesuai dengan struktur yang diinginkan
+    response := map[string]interface{}{
+        "data": map[string]interface{}{
+            "id":         polling.ID,
+            "title":      polling.Title,
+            "question":   polling.Question,
+            "option": map[string]interface{}{
+                "type": "image", // Atau "text" jika pilihan berupa teks
+                "data": polling.Choices,
+            },
+            "banner": map[string]interface{}{
+                "type": polling.Banner.Type,
+                "url":  polling.Banner.URL,
+            },
+            "is_submitted": isSubmitted,
+            "is_ended":     isEnded,
+        },
+        "meta": map[string]interface{}{
+            "questions": map[string]interface{}{
+                "total":   totalQuestions,
+                "current": currentQuestion,
+            },
+        },
+        "status": map[string]interface{}{
+            "code":    0,
+            "message": "Success",
+        },
+    }
+
+    return e.JSON(http.StatusOK, response)
 }
