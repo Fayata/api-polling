@@ -18,7 +18,7 @@ func Result(e echo.Context) error {
 	}
 
 	// Mengambil hasil polling berdasarkan ID polling menggunakan model
-	pollingResults, err := models.GetPollingResultsByID(uint(pollID)) // ubah jadi uint
+	pollingResults, err := models.GetPollingResultsByID(int(pollID)) // ubah jadi uint
 	if err != nil {
 		log.Println("Gagal mengambil hasil polling:", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil hasil polling")

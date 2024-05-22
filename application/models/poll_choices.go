@@ -30,7 +30,7 @@ type AddPollRequest struct {
 }
 
 // Fungsi hasil polling berdasarkan ID polling
-func GetPollingResultsByID(pollID uint) ([]map[string]interface{}, error) {
+func GetPollingResultsByID(pollID int) ([]map[string]interface{}, error) {
 	db := database.GetDB()
 
 	var results []struct {

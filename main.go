@@ -27,6 +27,7 @@ func main() {
         &models.Polling{},
         &models.PollChoice{},
         &models.UserChoice{},
+        &models.PollingBanner{},
     )
     if err != nil {
         log.Fatal("Error migrating database:", err)

@@ -4,6 +4,8 @@ import (
 	"api-polling/application/models"
 	"api-polling/system/database"
 	"net/http"
+	"strconv"
+
 	// "strconv"
 
 	"github.com/labstack/echo"
@@ -40,12 +42,17 @@ func AddPoll(e echo.Context) error {
         return echo.NewHTTPError(http.StatusInternalServerError, "Gagal menghitung total polls")
     }
 
+    currentQuestion, err := strconv.ParseUint(e.QueryParam("question_number"), 10, 64)
+    if err != nil {
+    return echo.NewHTTPError(http.StatusBadRequest, "Invalid question_number")
+}
+
     response := map[string]interface{}{
-        "data": "", // Kosongkan field data sesuai permintaan
+        "data": "", 
         "meta": map[string]interface{}{
             "questions": map[string]interface{}{
                 "total":   totalPolls,
-                "current": req.QuestionNumber, // Gunakan question_number dari request
+                "current": currentQuestion, 
             },
         },
         "status": map[string]interface{}{
