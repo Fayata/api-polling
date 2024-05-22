@@ -94,6 +94,16 @@ func (up *Polling) GetAll() ([]Polling, error) {
     return polls, err
 }
 
+func (p *Polling) GetTotalPolls() (int64, error) {
+    db := database.GetDB()
+    var total int64
+    if err := db.Model(&Polling{}).Count(&total).Error; err != nil {
+        return 0, err
+    }
+    return total, nil
+}
+
+
 // Fungsi untuk memeriksa apakah polling sudah disubmit dan ended
 func (p *Polling) CheckPollStatus(e echo.Context) (bool, bool, error) {
     userID := e.Get("user_id").(int)

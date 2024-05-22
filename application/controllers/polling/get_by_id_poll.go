@@ -39,7 +39,7 @@ func ByID(e echo.Context) error {
             "title":      polling.Title,
             "question":   polling.Question,
             "option": map[string]interface{}{
-                "type": "image", // Atau "text" jika pilihan berupa teks
+                "type": "image",
                 "data": polling.Choices,
             },
             "banner": map[string]interface{}{

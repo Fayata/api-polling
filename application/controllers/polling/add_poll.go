@@ -2,42 +2,57 @@ package controllers
 
 import (
 	"api-polling/application/models"
+	"api-polling/system/database"
 	"net/http"
-	"strconv"
+	// "strconv"
 
 	"github.com/labstack/echo"
 )
 
 func AddPoll(e echo.Context) error {
-	var userChoice models.UserChoice
+    var req models.AddPollRequest
+    if err := e.Bind(&req); err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
+    }
 
-	if err := e.Bind(&userChoice); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
-	}
+    var pollChoice models.PollChoice
+    if err := database.GetDB().First(&pollChoice, req.OptionID).Error; err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, "Invalid option_id")
+    }
 
-	userID := e.Get("user_id").(int)
-	userChoice.UserID = uint(userID)
+    var polling models.Polling
+    if err := database.GetDB().First(&polling, pollChoice.PollID).Error; err != nil {
+        return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil data polling")
+    }
 
-	pollID, err := strconv.Atoi(e.Param("id"))
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid poll_id")
-	}
-	userChoice.PollID = pollID
+    userChoice := models.UserChoice{
+        ChoiceID: int(req.OptionID),
+        UserID:   int(e.Get("user_id").(int)),
+        PollID:   pollChoice.PollID,
+    }
 
-	if err := userChoice.AddPoll(); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
+    if err := userChoice.AddPoll(); err != nil {
+        return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+    }
 
-	response := map[string]interface{}{
-		"data": map[string]interface{}{
-			"id": userChoice.ID, // Pake ID dari GORM
-			"status": map[string]interface{}{
-				"message": "submit berhasil",
-				"code":    0,
-				"type":    "success",
-			},
-		},
-	}
+    totalPolls, err := polling.GetTotalPolls()
+    if err != nil {
+        return echo.NewHTTPError(http.StatusInternalServerError, "Gagal menghitung total polls")
+    }
 
-	return e.JSON(http.StatusOK, response)
+    response := map[string]interface{}{
+        "data": "", // Kosongkan field data sesuai permintaan
+        "meta": map[string]interface{}{
+            "questions": map[string]interface{}{
+                "total":   totalPolls,
+                "current": req.QuestionNumber, // Gunakan question_number dari request
+            },
+        },
+        "status": map[string]interface{}{
+            "code":    0,
+            "message": "Submit berhasil",
+        },
+    }
+
+    return e.JSON(http.StatusOK, response)
 }
