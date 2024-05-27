@@ -40,11 +40,11 @@ func ByID(e echo.Context) error {
             "question":   polling.Question,
             "option": map[string]interface{}{
                 "type": "image",
-                "data": polling.Choices,
+                 "data": polling,
             },
             "banner": map[string]interface{}{
-                "type": polling.Banner.Type,
-                "url":  polling.Banner.URL,
+                "type": polling.Type,
+                "url":  polling.URL,
             },
             "is_submitted": isSubmitted,
             "is_ended":     isEnded,

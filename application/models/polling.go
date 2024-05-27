@@ -11,25 +11,30 @@ import (
 
 type Polling struct {
 	gorm.Model
-	Title    string        `gorm:"column:title"`
-	Question string        `gorm:"column:question"`
-	Banner   PollingBanner `gorm:"foreignKey:banner_id"`
-	Choices  []PollChoice  `gorm:"foreignKey:poll_id"`
-}
-
-type PollingBanner struct {
-	gorm.Model
-	PollID int    `gorm:"column:poll_id"`
-	Type   string `gorm:"column:type"`
-	URL    string `gorm:"column:url"`
-}
-
-type PollChoice struct {
-	gorm.Model
-	Option   string `gorm:"column:option"`
+	Title    string `gorm:"column:title"`
+	Question string `gorm:"column:question"`
 	PollID   int    `gorm:"column:poll_id"`
+	Type     string `gorm:"column:type"`
+	URL      string `gorm:"column:url"`
+	Option   string `gorm:"column:option"`
 	ImageURL string `gorm:"column:image_url"`
+	// Banner   PollingBanner //`gorm:"foreign_key:banner_id"`
+	// Choices  []PollChoice  `gorm:"foreign_key:poll_id"`
 }
+
+// type PollingBanner struct {
+// 	// gorm.Model
+// 	PollID int    `gorm:"column:poll_id"`
+// 	Type   string `gorm:"column:type"`
+// 	URL    string `gorm:"column:url"`
+// }
+
+// type PollChoice struct {
+// 	// gorm.Model
+// 	Option   string `gorm:"column:option"`
+// 	PollID   int    `gorm:"foreign_key:poll_id"`
+// 	ImageURL string `gorm:"column:image_url"`
+// }
 
 ///////////////////CMS////////////////////
 
@@ -58,7 +63,7 @@ func (p *Polling) Update(id int) error {
 	}
 
 	existingPolling.Title = p.Title
-	existingPolling.Choices = p.Choices
+	existingPolling.Option = p.Option
 
 	if err := db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&existingPolling).Error; err != nil {
 		log.Println("Gagal mengupdate data polling:", err)
@@ -70,7 +75,7 @@ func (p *Polling) Update(id int) error {
 
 func (p *Polling) Delete(id int) error {
 	db := database.GetDB()
-	if err := db.Where("poll_id = ?", id).Delete(&PollChoice{}).Error; err != nil {
+	if err := db.Where("poll_id = ?", id).Delete(&Polling{}).Error; err != nil {
 		return err
 	}
 

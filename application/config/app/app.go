@@ -24,13 +24,13 @@ func init() {
 	Load = config{
 		WebServer: webServer{
 			Host: "0.0.0.0",
-			Port: "9000",
+			Port: "9090",
 		},
 		Database: database{
 			Host:     "172.19.0.1",
 			Port:     "3307",
 			User:     "root",
-			Password: "",
+			Password: "root",
 			Name:     "db_api",
 		},
 	}

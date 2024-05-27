@@ -20,7 +20,7 @@ func AppRoute() *echo.Echo {
 	e.POST("api/v1/cms/polling", controllers_cms.Create)
 	//Users
 	e.GET("api/v1/polling/all", controllers_polling.AllList, middleware.JWTMiddleware)
-	e.GET("api/v1/polling/:id", controllers_polling.ByID, middleware.JWTMiddleware)
+	e.GET("api/v1/polling/:id", controllers_polling.ByID)
 	e.POST("api/v1/polling/:id", controllers_polling.AddPoll, middleware.JWTMiddleware)
 	e.GET("api/v1/polling/:poll_id/leaderboard", controllers_result.Result, middleware.JWTMiddleware)
 	return e

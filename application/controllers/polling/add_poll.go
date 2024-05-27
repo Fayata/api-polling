@@ -17,7 +17,7 @@ func AddPoll(e echo.Context) error {
         return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
     }
 
-    var pollChoice models.PollChoice
+    var pollChoice models.Polling
     if err := database.GetDB().First(&pollChoice, req.OptionID).Error; err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Invalid option_id")
     }
