@@ -4,13 +4,11 @@ import (
 	"api-polling/system/database"
 	"errors"
 	"log"
-
-	"gorm.io/gorm"
 )
 
 type UserChoice struct {
-	gorm.Model
-	ChoiceID int `gorm:"not null;column:choice_id"`
+	ID       int  `gorm:"column:id"`
+	ChoiceID uint `gorm:"not null;column:choice_id"`
 	UserID   int `gorm:"not null;column:user_id"`
 	PollID   int  `gorm:"not null;column:poll_id"`
 }

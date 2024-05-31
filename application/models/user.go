@@ -3,16 +3,16 @@ package models
 import (
 	"api-polling/system/database"
 	"log"
-
-	"gorm.io/gorm"
 )
 
 type User struct {
-	gorm.Model
-	Username string `gorm:"unique"`
-	Email    string `gorm:"unique"`
-	Password string
-	Token    string
+	ID       int              `gorm:"column:id"`
+	Username string           `gorm:"column:username"`
+	Email    string           `gorm:"column:email"`
+	Password string           `gorm:"column:password"`
+	Token    string           `gorm:"column:token"`
+	UserC    []UserChoice     `gorm:"foreignKey:UserID;references:ID"`
+	UserQ    []UserQuizAnswer `gorm:"foreignKey:UserID;references:ID"`
 }
 
 func (u *User) Login(email string, password string) (*User, error) {
@@ -31,8 +31,6 @@ func (u *User) IsTokenValid(token string) bool {
 	err := db.Where("id = ? AND token = ?", u.ID, token).First(u).Error
 	return err == nil
 }
-
-
 
 // func (u *User) Register() error {
 // 	db, err := database.Conn()

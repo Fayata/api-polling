@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"api-polling/application/models/quiz"
+	"api-polling/application/models"
 	"api-polling/system/database"
 	"net/http"
 

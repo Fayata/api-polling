@@ -15,22 +15,18 @@ type PollChoices struct {
 
 type UserChoices struct {
 	gorm.Model
-	ChoiceID int `gorm:"column:choice_id"`
-	UserID   int `gorm:"column:user_id"`
+	ChoiceID uint `gorm:"column:choice_id"`
+	UserID   uint `gorm:"column:user_id"`
 	PollID   int  `gorm:"column:poll_id"`
 }
 
 type PollingResult struct {
-	ChoiceID  int `json:"choice_id"`
+	ChoiceID  uint `json:"choice_id"`
 	VoteCount int  `json:"vote_count"`
-}
-type AddPollRequest struct {
-    OptionID       int `json:"option_id"`
-    QuestionNumber int `json:"question_number"`
 }
 
 // Fungsi hasil polling berdasarkan ID polling
-func GetPollingResultsByID(pollID int) ([]map[string]interface{}, error) {
+func GetPollingResultsByID(pollID uint) ([]map[string]interface{}, error) {
 	db := database.GetDB()
 
 	var results []struct {

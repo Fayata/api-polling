@@ -1,63 +1,48 @@
 package controllers
 
 import (
-	"api-polling/application/models"
-	"api-polling/system/database"
-	"net/http"
-	"strconv"
+    "api-polling/application/models"
+    "net/http"
+    "strconv"
 
-	// "strconv"
-
-	"github.com/labstack/echo"
+    "github.com/labstack/echo"
 )
 
+type AddPollRequest struct {
+    ChoiceID uint `json:"choice_id"`
+}
+
 func AddPoll(e echo.Context) error {
-    var req models.AddPollRequest
+    var req AddPollRequest
     if err := e.Bind(&req); err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
     }
 
-    var pollChoice models.Polling
-    if err := database.GetDB().First(&pollChoice, req.OptionID).Error; err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, "Invalid option_id")
-    }
-
-    var polling models.Polling
-    if err := database.GetDB().First(&polling, pollChoice.PollID).Error; err != nil {
-        return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil data polling")
-    }
-
+    userID := e.Get("user_id").(int)
     userChoice := models.UserChoice{
-        ChoiceID: int(req.OptionID),
-        UserID:   int(e.Get("user_id").(int)),
-        PollID:   pollChoice.PollID,
+        ChoiceID: req.ChoiceID, 
+        UserID:   int(userID),
     }
+
+    pollIDStr := e.Param("id")
+    pollID, err := strconv.Atoi(pollIDStr)
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, "Invalid poll_id")
+    }
+    userChoice.PollID = int(pollID)
+	
 
     if err := userChoice.AddPoll(); err != nil {
         return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
     }
 
-    totalPolls, err := polling.GetTotalPolls()
-    if err != nil {
-        return echo.NewHTTPError(http.StatusInternalServerError, "Gagal menghitung total polls")
-    }
-
-    currentQuestion, err := strconv.ParseUint(e.QueryParam("question_number"), 10, 64)
-    if err != nil {
-    return echo.NewHTTPError(http.StatusBadRequest, "Invalid question_number")
-}
-
     response := map[string]interface{}{
-        "data": "", 
-        "meta": map[string]interface{}{
-            "questions": map[string]interface{}{
-                "total":   totalPolls,
-                "current": currentQuestion, 
-            },
-        },
+        "data": 0,
+        "meta": 0,
         "status": map[string]interface{}{
+            "message": "submit berhasil",
             "code":    0,
-            "message": "Submit berhasil",
+            "type":    "success",
         },
     }
 

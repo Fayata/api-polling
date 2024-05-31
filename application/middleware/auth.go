@@ -15,9 +15,10 @@ import (
 	"gorm.io/gorm"
 )
 
-var jwtSecret = []byte(getEnv("JWT_SECRET", "default_secret"))
 
 func getEnv(key, defaultValue string) string {
+	log.Printf("===> %v", os.Getenv("JWT_SECRET"))
+	
 	val, exists := os.LookupEnv(key)
 	if !exists {
 		return defaultValue
@@ -33,6 +34,8 @@ func SetCORS(e *echo.Echo) {
 }
 
 func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	var jwtSecret = []byte(getEnv("JWT_SECRET", "default_secret"))
+
 	return func(e echo.Context) error {
 		authHeader := e.Request().Header.Get("Authorization")
 		if authHeader == "" {
@@ -48,13 +51,13 @@ func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		})
 		if err != nil || !token.Valid {
 			log.Println("Token tidak valid:", err)
-			return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak valid")
+			return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak validi")
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
 			log.Println("Klaim token tidak valid")
-			return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak valid")
+			return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak valied")
 		}
 
 		userID, ok := claims["id"].(float64)
@@ -63,9 +66,8 @@ func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak valid")
 		}
 
-		// Pengecekan keberadaan user di database
 		var user models.User
-		if err := database.GetDB().First(&user, uint(userID)).Error; err != nil {
+		if err := database.GetDB().First(&user, int(userID)).Error; err != nil {
 			if err == gorm.ErrRecordNotFound {
 				return echo.NewHTTPError(http.StatusUnauthorized, "User tidak ditemukan")
 			}
