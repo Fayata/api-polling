@@ -28,7 +28,7 @@ type QuizOption struct {
 
 type UserQuizAnswer struct {
 	ID       int  `gorm:"column:id"`
-	UserID   uint `gorm:"column:user_id"`
+	UserID   int `gorm:"column:user_id"`
 	QuizID   uint `gorm:"column:quiz_id"`
 	OptionID uint `gorm:"column:option_id"`
 }

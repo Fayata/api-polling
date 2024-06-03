@@ -33,7 +33,7 @@ func Answer(e echo.Context) error {
 
     userAnswer := models.UserQuizAnswer{
         OptionID: req.OptionID,
-        UserID:   uint(e.Get("user_id").(int)),
+        UserID:   int(e.Get("user_id").(int)),
         QuizID:   quizOption.QuizID,
     }
 
