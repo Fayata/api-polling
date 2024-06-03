@@ -1,251 +1,130 @@
 package models
 
 import (
+	// "api-polling/application/models"
 	"api-polling/system/database"
 	"log"
+
+	"github.com/labstack/echo"
+	"gorm.io/gorm"
 )
 
 type Polling struct {
-	ID      int          `json:"id"`
-	Title   string       `json:"title"`
-	Choices []PollChoice `json:"choices"`
+	ID       int          `gorm:"column:id"`
+	Title    string       `gorm:"column:title"`
+	Question string       `gorm:"column:question"`
+	Type     string       `gorm:"column:type"`
+	URL      string       `gorm:"column:url"`
+	ImageURL string       `gorm:"column:image_url"`
+	Choices  []PollChoice `gorm:"foreignKey:PollID;references:ID"`
+	UserC    []UserChoice `gorm:"foreignKey:PollID;references:ID"`
 }
+
 type PollChoice struct {
-	ID     int    `json:"id"`
-	Option string `json:"option"`
-	PollID int    `json:"poll_id"`
+	ID       int          `gorm:"column:id"`
+	Option   string       `gorm:"column:option"`
+	PollID   int          `gorm:"column:poll_id"`
+	ImageURL string       `gorm:"column:image_url"`
+	UserC    []UserChoice `gorm:"foreignKey:ChoiceID;references:ID"`
 }
 
 ///////////////////CMS////////////////////
 
 func (p *Polling) Create() error {
-    db, err := database.Conn()
-    if err != nil {
-        log.Println("Gagal terhubung ke database:", err)
-        return err
-    }
-    defer db.Close()
-
-    tx, err := db.Begin()
-    if err != nil {
-        log.Println("Gagal memulai transaksi:", err)
-        return err
-    }
-
-    query := "INSERT INTO polling (title) VALUES (?)"
-    result, err := tx.Exec(query, p.Title)
-    if err != nil {
-        tx.Rollback()
-        log.Println("Gagal membuat polling baru (tabel polling):", err)
-        return err
-    }
-
-    lastInsertId, err := result.LastInsertId()
-    if err != nil {
-        tx.Rollback()
-        log.Println("Gagal mendapatkan last insert ID:", err)
-        return err
-    }
-
-    query2 := "INSERT INTO poll_choices (option, poll_id) VALUES (?, ?)"
-    for _, choice := range p.Choices {
-        _, err = tx.Exec(query2, choice.Option, lastInsertId)
-        if err != nil {
-            tx.Rollback()
-            log.Println("Gagal menambahkan pilihan polling:", err)
-            return err
-        }
-    }
-
-    if err := tx.Commit(); err != nil {
-        log.Println("Gagal melakukan commit:", err)
-        return err
-    }
-
-    return nil
-}
-
-func (p *Polling) Update(id int) error {
-    db, err := database.Conn()
-    if err != nil {
-        log.Println("Gagal terhubung ke database:", err)
-        return err
-    }
-    defer db.Close()
-
-    tx, err := db.Begin()
-    if err != nil {
-        log.Println("Gagal memulai transaksi", err)
-        return err
-    }
-
-    result, err := tx.Exec("UPDATE polling SET title = ? WHERE id = ?", p.Title, id)
-    if err != nil {
-        tx.Rollback()
-        log.Println("Gagal mengupdate data polling:", err)
-        return err
-    }
-
-    rowsAffected, err := result.RowsAffected()
-    if err != nil {
-        tx.Rollback()
-        log.Println("Gagal mendapatkan jumlah baris yang terdampak:", err)
-        return err
-    }
-
-    if rowsAffected == 0 {
-        tx.Rollback()
-        log.Println("Data polling tidak ditemukan:", id)
-        return err
-    }
-
-    for _, choice := range p.Choices {
-        _, err = tx.Exec("UPDATE poll_choices SET option = ? WHERE id = ?", choice.Option, choice.ID)
-        if err != nil {
-            tx.Rollback()
-            log.Println("Gagal mengupdate pilihan polling:", err)
-            return err
-        }
-    }
-
-    if err := tx.Commit(); err != nil {
-        log.Println("Gagal melakukan commit:", err)
-        return err
-    }
-
-    return nil
-}
-
-func (p *Polling) Delete(id int) error {
-    db, err := database.Conn()
-    if err != nil {
-        log.Println("Gagal terhubung ke database:", err)
-        return err
-    }
-    defer db.Close()
-
-    tx, err := db.Begin()
-    if err != nil {
-        log.Println("Gagal memulai transaksi:", err)
-        return err
-    }
-
-    result, err := tx.Exec("DELETE FROM poll_choices WHERE poll_id=?", id)
-    if err != nil {
-        tx.Rollback()
-        log.Println("Gagal menghapus hasil polling:", err)
-        return err
-    }
-
-    affectedRows, err := result.RowsAffected()
-    if err != nil {
-        tx.Rollback()
-        log.Println("Gagal mendapatkan jumlah baris yang terhapus:", err)
-        return err
-    }
-
-    if affectedRows == 0 {
-        tx.Rollback()
-        log.Println("Tidak ada hasil polling yang ditemukan untuk ID:", id)
-        return err
-    }
-
-    _, err = tx.Exec("DELETE FROM polling WHERE id=?", id)
-    if err != nil {
-        tx.Rollback()
-        log.Println("Gagal menghapus data polling:", err)
-        return err
-    }
-
-    affectedRows, err = result.RowsAffected()
-    if err != nil {
-        tx.Rollback()
-        log.Println("Gagal mendapatkan jumlah baris yang terhapus:", err)
-        return err
-    }
-
-    if affectedRows == 0 {
-        tx.Rollback()
-        log.Println("Tidak ada data polling yang ditemukan untuk ID:", id)
-        return err
-    }
-
-    if err := tx.Commit(); err != nil {
-        log.Println("Gagal melakukan commit:", err)
-        return err
-    }
-
-    return nil
-}
-
-////////////////////USERS///////////////////
-
-func (p *Polling) GetByID(id int) error {
-	db, err := database.Conn()
-	if err != nil {
-		log.Println("Failed to connect to database:", err)
-		return err
-	}
-	defer db.Close()
-
-	query := `
-        SELECT p.id, p.title, pc.id, pc.option 
-        FROM polling p
-        LEFT JOIN poll_choices pc ON p.id = pc.poll_id
-        WHERE p.id = ?
-    `
-	rows, err := db.Query(query, id)
-	if err != nil {
-		log.Println("Failed to execute query:", err)
-		return err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var choice PollChoice
-		if err := rows.Scan(&p.ID, &p.Title, &choice.ID, &choice.Option); err != nil {
-			log.Println("Failed to read row from query result:", err)
-			continue
+	db := database.GetDB()
+	// Create polling and its choices in a transaction
+	err := db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(p).Error; err != nil {
+			return err
 		}
-		p.Choices = append(p.Choices, choice)
+		return nil
+	})
+
+	if err != nil {
+		log.Println("Gagal membuat polling baru:", err)
+		return err
 	}
 
 	return nil
 }
 
+func (p *Polling) Update(id int) error {
+	db := database.GetDB()
+	var existingPolling Polling
+	if err := db.First(&existingPolling, id).Error; err != nil {
+		return err
+	}
+
+	existingPolling.Title = p.Title
+	existingPolling.Choices = p.Choices
+
+	if err := db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&existingPolling).Error; err != nil {
+		log.Println("Gagal mengupdate data polling:", err)
+		return err
+	}
+
+	return nil
+}
+
+func (p *Polling) Delete(id int) error {
+	db := database.GetDB()
+	if err := db.Where("id = ?", id).Delete(&PollChoice{}).Error; err != nil {
+		return err
+	}
+
+	if err := db.Delete(&Polling{}, id).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+////////////////////USERS///////////////////
+
+func (p *Polling) GetByID(id int) error {
+	db := database.GetDB()
+	return db.Preload("Choices").Find(p, id).Error
+}
+
 func (up *Polling) GetAll() ([]Polling, error) {
 	var polls []Polling
+	db := database.GetDB()
+	err := db.Find(&polls).Error
+	return polls, err
+}
 
-	db, err := database.Conn()
-	if err != nil {
-		log.Println("Gagal terhubung ke database:", err)
-		return polls, err
-	}
-	defer db.Close()
-
-	query := `
-        SELECT id, title FROM polling
-    `
-	rows, err := db.Query(query)
-	if err != nil {
-		log.Println("Gagal mengeksekusi query:", err)
-		return polls, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var poll Polling
-		if err := rows.Scan(&poll.ID, &poll.Title); err != nil {
-			log.Println("Gagal membaca baris dari hasil query:", err)
-			continue
-		}
-		polls = append(polls, poll)
+// Fungsi untuk memeriksa apakah polling sudah disubmit dan ended
+func (p *Polling) CheckPollStatus(e echo.Context, userId int) (bool, bool, error) {
+    var userChoice UserChoice
+    err := database.GetDB().Where("user_id = ? AND poll_id = ?", userId, p.ID).First(&userChoice).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return false, false, err
 	}
 
-	if err := rows.Err(); err != nil {
-		log.Println("Gagal membaca semua baris dari hasil query:", err)
-		return polls, err
-	}
+	isSubmitted := err == nil
+	isEnded := false
 
-	return polls, nil
+	return isSubmitted, isEnded, nil
+}
+func (pc *PollChoice) GetVoteCount() (float64, error) {
+    db := database.GetDB()
+
+    // Hitung total vote untuk poll_id yang sesuai
+    var totalVotes int64
+    if err := db.Model(&UserChoice{}).Where("poll_id = ?", pc.PollID).Count(&totalVotes).Error; err != nil {
+        return 0, err
+    }
+
+    // Hitung vote untuk choice_id yang sesuai
+    var choiceVotes int64
+    if err := db.Model(&UserChoice{}).Where("choice_id = ?", pc.ID).Count(&choiceVotes).Error; err != nil {
+        return 0, err
+    }
+
+    // Hitung persentase
+    var percentage float64
+    if totalVotes > 0 {
+        percentage = (float64(choiceVotes) / float64(totalVotes)) * 100
+    }
+
+    return percentage, nil
 }

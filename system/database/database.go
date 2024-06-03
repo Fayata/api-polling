@@ -1,38 +1,50 @@
 package database
 
 import (
-	"api-polling/application/config/app"
-	"database/sql"
 	"fmt"
 	"log"
+	"os"
+	"sync"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
-func init() {
-	initDatabase()
+var (
+    DB  *gorm.DB
+    once sync.Once
+    dsn string
+)
+
+func InitDB() {
+    once.Do(func() {
+        loadEnv()
+        dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+            os.Getenv("DB_USER"),
+            os.Getenv("DB_PASSWORD"),
+            os.Getenv("DB_HOST"),
+            os.Getenv("DB_PORT"),
+            os.Getenv("DB_NAME"),
+        )
+        var err error
+        DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+        if err != nil {
+            log.Fatal("Error connecting to database:", err)
+        }
+    })
 }
 
-
-func Conn() (*sql.DB, error) {
-	dbConfig := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v", app.Load.Database.User, app.Load.Database.Password, app.Load.Database.Host, app.Load.Database.Port, app.Load.Database.Name)
-
-	db, err := sql.Open("mysql", dbConfig)
-	if err != nil {
-		return nil, err
-	}
-	return db, nil
+func GetDB() *gorm.DB {
+    if DB == nil {
+        InitDB()
+    }
+    return DB
 }
 
-func initDatabase() {
-	dbConfig := fmt.Sprintf("%v:%v@tcp(%v:%v)/%v", app.Load.Database.User, app.Load.Database.Password, app.Load.Database.Host, app.Load.Database.Port, app.Load.Database.Name)
-	db, err := sql.Open("mysql", dbConfig)
-	if err != nil {
-		log.Fatalln("Error init to database:", err)
-	}
-
-	err = db.Ping()
-	if err != nil {
-		log.Fatalln("Error ping to database:", err)
-	}
+func loadEnv() {
+    err := godotenv.Load()
+    if err != nil {
+        log.Fatal("Error loading .env file")
+    }
 }

@@ -30,14 +30,14 @@ func Login(e echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal melakukan login")
 	}
 
-	//Signature token
+	// Signature token
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	claims := token.Claims.(jwt.MapClaims)
 	claims["email"] = user.Email
 	claims["id"] = user.ID
 
-	tokenString, err := token.SignedString([]byte(getEnv("jwt_secret", "default_secret")))
+	tokenString, err := token.SignedString([]byte(getEnv("JWT_SECRET", "default_secret")))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal menyimpan token")
 	}

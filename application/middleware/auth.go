@@ -1,24 +1,31 @@
-package middlewares
+package middleware
 
 import (
 	"log"
 	"net/http"
 	"os"
 	"strings"
-	"github.com/labstack/echo/middleware"
+
+	"api-polling/application/models"
+	"api-polling/system/database"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+	"gorm.io/gorm"
 )
 
-var jwtSecret = []byte(getEnv("jwt_secret", "default_secret"))
 
 func getEnv(key, defaultValue string) string {
+	log.Printf("===> %v", os.Getenv("JWT_SECRET"))
+	
 	val, exists := os.LookupEnv(key)
 	if !exists {
 		return defaultValue
 	}
 	return val
 }
+
 func SetCORS(e *echo.Echo) {
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
@@ -27,6 +34,8 @@ func SetCORS(e *echo.Echo) {
 }
 
 func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	var jwtSecret = []byte(getEnv("JWT_SECRET", "default_secret"))
+
 	return func(e echo.Context) error {
 		authHeader := e.Request().Header.Get("Authorization")
 		if authHeader == "" {
@@ -42,13 +51,13 @@ func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		})
 		if err != nil || !token.Valid {
 			log.Println("Token tidak valid:", err)
-			return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak valid")
+			return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak validi")
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
 			log.Println("Klaim token tidak valid")
-			return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak valid")
+			return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak valied")
 		}
 
 		userID, ok := claims["id"].(float64)
@@ -56,6 +65,16 @@ func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			log.Println("Format klaim user_id tidak valid")
 			return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak valid")
 		}
+
+		var user models.User
+		if err := database.GetDB().First(&user, int(userID)).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return echo.NewHTTPError(http.StatusUnauthorized, "User tidak ditemukan")
+			}
+			log.Println("Error saat mengambil data user:", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Terjadi kesalahan")
+		}
+
 		e.Set("user_id", int(userID))
 
 		return next(e)

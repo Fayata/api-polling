@@ -24,7 +24,7 @@ func init() {
 	Load = config{
 		WebServer: webServer{
 			Host: "0.0.0.0",
-			Port: "9000",
+			Port: "8080",
 		},
 		Database: database{
 			Host:     "172.19.0.1",
