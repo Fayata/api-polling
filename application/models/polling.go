@@ -95,7 +95,7 @@ func (up *Polling) GetAll() ([]Polling, error) {
 // Fungsi untuk memeriksa apakah polling sudah disubmit dan ended
 func (p *Polling) CheckPollStatus(e echo.Context, userId int) (bool, bool, error) {
     var userChoice UserChoice
-    err := database.GetDB().Where("user_id = ? AND poll_id = ?", userId, p.ID).First(&userChoice).Error
+    err := database.GetDB().Where("user_id = ? AND poll_id = ?", userId, p.ID).Find(&userChoice).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, false, err
 	}
