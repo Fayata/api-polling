@@ -15,6 +15,11 @@ type User struct {
 	UserQ    []UserQuizAnswer `gorm:"foreignKey:UserID;references:ID"`
 }
 
+func (m *User) TableName() string {
+	return "user"
+}
+
+
 func (u *User) Login(email string, password string) (*User, error) {
 	db := database.GetDB()
 	var user User

@@ -20,11 +20,16 @@ type Poll struct {
 	Option_type 	string `gorm:"column:option_type"`
 }
 
+func (m *Poll) TableName() string {
+	return "poll"
+}
+
+
 type Poll_Choices struct {
 	ID           int    `gorm:"column:id"`
 	PollID       int    `gorm:"column:poll_id"`
 	Choice_image string `gorm:"column:choice_image"`
-	Choice_text  string `gorm:"column:choice_image"`
+	Choice_text  string `gorm:"column:choice_text"`
 }
 
 type Poll_Result struct {
@@ -32,12 +37,22 @@ type Poll_Result struct {
 	Choice_id int `gorm:"column:choice_id"`
 }
 
+func (m *Poll_Result) TableName() string {
+	return "poll_result"
+}
+
+
 type User_Answer struct {
 	ID        int `gorm:"column:id"`
 	User_Id   int `gorm:"column:user_id"`
 	Choice_id int `gorm:"column:choice_id"`
 	Poll_Id   int `gorm:"column:poll_id"`
 }
+
+func (m *User_Answer) TableName() string {
+	return "user_answer"
+}
+
 
 ///////////////////CMS////////////////////
 

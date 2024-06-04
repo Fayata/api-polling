@@ -19,7 +19,8 @@ func ByID(e echo.Context) error {
 
 	// Mengambil semua data yang diperlukan
 	var polling models.Poll
-	if err := db.Find(&polling, id).Error; err != nil {
+	polling.ID = id
+	if err := db.Find(&polling, polling).Error; err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Polling tidak ditemukan")
 	}
 

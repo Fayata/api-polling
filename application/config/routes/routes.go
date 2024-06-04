@@ -22,7 +22,7 @@ func AppRoute() *echo.Echo {
 	//Users Polling
 	e.GET("api/v1/polling/all", controllers_polling.AllList, middleware.JWTMiddleware)
 	e.GET("api/v1/polling/:id", controllers_polling.ByID)//, middleware.JWTMiddleware)
-	e.POST("api/v1/polling/:id", controllers_polling.AddPoll, middleware.JWTMiddleware)
+	e.POST("api/v1/polling/:id", controllers_polling.AddPoll)//, middleware.JWTMiddleware)
 	e.GET("api/v1/polling/:poll_id/leaderboard", controllers_result.Result, middleware.JWTMiddleware)
 
 	//Users Quiz

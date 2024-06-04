@@ -25,7 +25,7 @@ func main() {
 
 	// AutoMigrate models
 	err = database.GetDB().AutoMigrate(
-		&models.User{},
+		// &models.User{},
 		&models.Poll{},
 		&models.Poll_Choices{},
 		&models.User_Answer{},
