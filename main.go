@@ -26,12 +26,13 @@ func main() {
 	// AutoMigrate models
 	err = database.GetDB().AutoMigrate(
 		&models.User{},
-		&models.Polling{},
-		&models.PollChoice{},
-		&models.UserChoice{},
-		&models.Quiz{},
-		&models.QuizOption{},
-		&models.UserQuizAnswer{},
+		&models.Poll{},
+		&models.Poll_Choices{},
+		&models.User_Answer{},
+		&models.Poll_Result{},
+		// &models.Quiz{},
+		// &models.QuizOption{},
+		// &models.UserQuizAnswer{},
 	)
 	if err != nil {
 		log.Fatal("Error migrating database:", err)

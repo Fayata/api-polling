@@ -7,7 +7,7 @@ import (
 )
 
 func Create(e echo.Context) error {
-    var newPoll models.Polling
+    var newPoll models.Poll
     if err := e.Bind(&newPoll); err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Gagal melakukan binding data")
     }

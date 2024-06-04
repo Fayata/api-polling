@@ -13,7 +13,7 @@ func Delete(e echo.Context) error {
         return echo.NewHTTPError(http.StatusBadRequest, "ID tidak valid")
     }
 
-    var poll models.Polling
+    var poll models.Poll
     err = poll.Delete(id)
     if err != nil {
         return echo.NewHTTPError(http.StatusInternalServerError, "Gagal menghapus data polling")

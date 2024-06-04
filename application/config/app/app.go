@@ -31,7 +31,7 @@ func init() {
 			Port:     "3307",
 			User:     "root",
 			Password: "root",
-			Name:     "db_api",
+			Name:     "dev_interactive_poll",
 		},
 	}
 }

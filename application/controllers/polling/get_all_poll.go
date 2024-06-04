@@ -7,7 +7,7 @@ import (
 )
 
 func AllList(e echo.Context) error {
-    var userPolling models.Polling
+    var userPolling models.Poll
 
     if err := e.Bind(&userPolling); err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")

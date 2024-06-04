@@ -13,7 +13,7 @@ func Update(e echo.Context) error {
         return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
     }
 
-    var updatePoll models.Polling
+    var updatePoll models.Poll
     if err := e.Bind(&updatePoll); err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Invalid request")
     }

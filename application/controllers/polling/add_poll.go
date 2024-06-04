@@ -8,20 +8,18 @@ import (
     "github.com/labstack/echo"
 )
 
-type AddPollRequest struct {
-    ChoiceID uint `json:"choice_id"`
-}
+
 
 func AddPoll(e echo.Context) error {
-    var req AddPollRequest
+    var req models.User_Answer
     if err := e.Bind(&req); err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
     }
 
     userID := e.Get("user_id").(int)
-    userChoice := models.UserChoice{
-        ChoiceID: req.ChoiceID, 
-        UserID:   int(userID),
+    userChoice := models.User_Answer{
+        Choice_id: req.Choice_id, 
+        User_Id:   int(userID),
     }
 
     pollIDStr := e.Param("id")
@@ -29,7 +27,7 @@ func AddPoll(e echo.Context) error {
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Invalid poll_id")
     }
-    userChoice.PollID = int(pollID)
+    userChoice.Poll_Id = int(pollID)
 	
 
     if err := userChoice.AddPoll(); err != nil {
