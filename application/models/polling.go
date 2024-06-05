@@ -133,7 +133,7 @@ func (p *Poll) CheckPollStatus(e echo.Context, userID int) (bool, bool, error) {
 
 
 // Fungsi untuk mendapatkan persentase vote pada pilihan
-func (pc *Poll_Choices) GetVotePercentage(poll_id int) (float64, error) {
+func (pc *Poll_Choices) GetVotePercentage(poll_id int) (float32, error) {
 	db := database.GetDB()
 
 	// Hitung total vote untuk poll_id yang sesuai
@@ -149,9 +149,9 @@ func (pc *Poll_Choices) GetVotePercentage(poll_id int) (float64, error) {
 	}
 
 	// Hitung persentase
-	var percentage float64
+	var percentage float32
 	if totalVotes > 0 {
-		percentage = (float64(choiceVotes) / float64(totalVotes)) * 100
+		percentage = (float32(choiceVotes) / float32(totalVotes)) * 100
 	}
 
 	return percentage, nil

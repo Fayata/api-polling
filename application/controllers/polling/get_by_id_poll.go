@@ -45,11 +45,12 @@ func ByID(e echo.Context) error {
 		}
 	}
 
-	// Check if poll is submitted and ended
+	// Check if poll is submitted and ended (sesuaikan logika ini)
 	isSubmitted, isEnded, err := polling.CheckPollStatus(e, id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memeriksa status polling")
 	}
+
 	// Format pilihan (choices) untuk respons
 	formattedChoices := make([]map[string]interface{}, len(pollChoices))
 	for i, choice := range pollChoices {
@@ -72,6 +73,17 @@ func ByID(e echo.Context) error {
 			"value":       votePercentage,
 			"is_selected": isSelected,
 		}
+	}
+
+	err = polling.GetByID(polling.ID)
+
+	message := "Success"
+	code := 0
+
+	// Ubah pesan dan kode status jika ada error
+	if err != nil {
+		message = err.Error()
+		code = 1
 	}
 
 	response := map[string]interface{}{
@@ -97,8 +109,8 @@ func ByID(e echo.Context) error {
 			},
 		},
 		"status": map[string]interface{}{
-			"code":    0,
-			"message": "Success",
+			"code":    code,    // Gunakan kode status yang sesuai
+			"message": message, // Gunakan pesan yang sesuai
 		},
 	}
 

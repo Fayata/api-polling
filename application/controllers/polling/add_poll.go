@@ -1,47 +1,55 @@
 package controllers
 
 import (
-    "api-polling/application/models"
-    "net/http"
-    "strconv"
+	"api-polling/application/models"
+	"net/http"
+	"strconv"
 
-    "github.com/labstack/echo"
+	"github.com/labstack/echo"
 )
 
-
-
 func AddPoll(e echo.Context) error {
-    var req models.User_Answer
-    if err := e.Bind(&req); err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
-    }
+	var req models.User_Answer
+	if err := e.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
+	}
 
-    userChoice := models.User_Answer{
-        Choice_id: req.Choice_id, 
-        User_Id:   req.User_Id,
-    }
+	userChoice := models.User_Answer{
+		Choice_id: req.Choice_id,
+		User_Id:   req.User_Id,
+	}
 
-    pollIDStr := e.Param("id")
-    pollID, err := strconv.Atoi(pollIDStr)
-    if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, "Invalid poll_id")
-    }
-    userChoice.Poll_Id = int(pollID)
-	
+	pollIDStr := e.Param("id")
+	pollID, err := strconv.Atoi(pollIDStr)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid poll_id")
+	}
+	userChoice.Poll_Id = int(pollID)
 
-    if err := userChoice.AddPoll(); err != nil {
-        return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-    }
+	// Panggil fungsi AddPoll dari model
+	err = userChoice.AddPoll()
 
-    response := map[string]interface{}{
-        "data": 0,
-        "meta": 0,
-        "status": map[string]interface{}{
-            "message": "submit berhasil",
-            "code":    0,
-            "type":    "success",
-        },
-    }
+	// Buat respons dasar
+	response := map[string]interface{}{
+		"data": 0,
+		"meta": 0,
+		"status": map[string]interface{}{
+			"message": "Submit Berhasil",
+			"code":    0,
+			"type":    "success",
+		},
+	}
 
-    return e.JSON(http.StatusOK, response)
+	if err != nil {
+		response["status"].(map[string]interface{})["code"] = 1 
+		response["status"].(map[string]interface{})["type"] = "error"
+		response["status"].(map[string]interface{})["message"] = err.Error()
+		if err.Error() == "user has already polled" {
+			return e.JSON(http.StatusBadRequest, response)
+		} else {
+			return e.JSON(http.StatusInternalServerError, response)
+		}
+	}
+
+	return e.JSON(http.StatusOK, response)
 }
