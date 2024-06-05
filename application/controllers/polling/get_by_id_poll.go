@@ -45,7 +45,6 @@ func ByID(e echo.Context) error {
 		}
 	}
 
-	// Check if poll is submitted and ended (sesuaikan logika ini)
 	isSubmitted, isEnded := false, false
 	for _, ua := range userAnswers {
 		if ua.Poll_Id == id {
@@ -71,19 +70,17 @@ func ByID(e echo.Context) error {
 			}
 		}
 
-		// Dapatkan vote count dari pollResults
-		voteCount := 0
-		for _, pr := range pollResults {
-			if pr.Choice_id == choice.ID {
-				voteCount++
-			}
+        // Dapatkan vote percentage dari fungsi di model PollChoice
+		votePercentage, err := choice.GetVotePercentage(id)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil persentase suara")
 		}
 
 		formattedChoices[i] = map[string]interface{}{
 			"id":          choice.ID,
 			"label":       choice.Choice_text,
 			"image_url":   choice.Choice_image,
-			"value":       voteCount,
+			"value":       votePercentage, 
 			"is_selected": isSelected,
 		}
 	}
@@ -93,13 +90,13 @@ func ByID(e echo.Context) error {
 		"data": map[string]interface{}{
 			"id":         polling.ID,
 			"title":      polling.Title,
-			"question":   polling.Question,
+			"question":   polling.Question_text,
 			"option": map[string]interface{}{
-				"type": polling.Option_type,
+				"type": polling.Options_type,
 				"data": formattedChoices, 
 			},
 			"banner": map[string]interface{}{
-				"type": polling.Question_text,
+				"type": polling.Banner_type,
 				"url":  polling.Question_image,
 			},
 			"is_submitted": isSubmitted,

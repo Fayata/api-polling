@@ -17,13 +17,13 @@ type Poll struct {
 	Question_text  string `gorm:"column:question_text"`
 	Question_image string `gorm:"column:question_image"`
 	ImageURL       string `gorm:"column:image_url"`
-	Option_type 	string `gorm:"column:option_type"`
+	Options_type   string `gorm:"column:options_type"`
+	Banner_type    string `gorm:"column:banner_type"`
 }
 
 func (m *Poll) TableName() string {
 	return "poll"
 }
-
 
 type Poll_Choices struct {
 	ID           int    `gorm:"column:id"`
@@ -41,7 +41,6 @@ func (m *Poll_Result) TableName() string {
 	return "poll_result"
 }
 
-
 type User_Answer struct {
 	ID        int `gorm:"column:id"`
 	User_Id   int `gorm:"column:user_id"`
@@ -52,7 +51,6 @@ type User_Answer struct {
 func (m *User_Answer) TableName() string {
 	return "user_answer"
 }
-
 
 ///////////////////CMS////////////////////
 
@@ -137,37 +135,37 @@ func (p *Poll) CheckPollStatus(e echo.Context, userID int) (bool, bool, error) {
 }
 
 // Fungsi untuk mendapatkan persentase vote pada pilihan
-func (pc *Poll_Choices) GetVotePercentage(pollID int) (float64, error) {
-    db := database.GetDB()
+func (pc *Poll_Choices) GetVotePercentage(poll_id int) (float64, error) {
+	db := database.GetDB()
 
-    // Hitung total vote untuk poll_id yang sesuai
-    var totalVotes int64
-    if err := db.Model(&User_Answer{}).Where("poll_id = ?", pollID).Count(&totalVotes).Error; err != nil {
-        return 0, err
-    }
+	// Hitung total vote untuk poll_id yang sesuai
+	var totalVotes int64
+	if err := db.Model(&User_Answer{}).Where("poll_id = ?", poll_id).Count(&totalVotes).Error; err != nil {
+		return 0, err
+	}
 
-    // Hitung vote untuk choice_id yang sesuai
-    var choiceVotes int64
-    if err := db.Model(&User_Answer{}).Where("choice_id = ? AND poll_id = ?", pc.ID, pollID).Count(&choiceVotes).Error; err != nil {
-        return 0, err
-    }
+	// Hitung vote untuk choice_id yang sesuai
+	var choiceVotes int64
+	if err := db.Model(&User_Answer{}).Where("choice_id = ? AND poll_id = ?", pc.ID, poll_id).Count(&choiceVotes).Error; err != nil {
+		return 0, err
+	}
 
-    // Hitung persentase
-    var percentage float64
-    if totalVotes > 0 {
-        percentage = (float64(choiceVotes) / float64(totalVotes)) * 100
-    }
+	// Hitung persentase
+	var percentage float64
+	if totalVotes > 0 {
+		percentage = (float64(choiceVotes) / float64(totalVotes)) * 100
+	}
 
-    return percentage, nil
+	return percentage, nil
 }
 
 // Fungsi hasil polling berdasarkan ID polling
-func GetPollingResultsByID(pollID uint) ([]map[string]interface{}, error) {
+func GetPollingResultsByID(poll_id uint) ([]map[string]interface{}, error) {
 	db := database.GetDB()
 
 	// Ambil semua pilihan untuk pollID tertentu
 	var pollChoices []Poll_Choices
-	if err := db.Where("poll_id = ?", pollID).Find(&pollChoices).Error; err != nil {
+	if err := db.Where("poll_id = ?", poll_id).Find(&pollChoices).Error; err != nil {
 		log.Println("Failed to fetch poll choices:", err)
 		return nil, err
 	}
@@ -175,7 +173,7 @@ func GetPollingResultsByID(pollID uint) ([]map[string]interface{}, error) {
 	// Ambil jumlah vote untuk setiap pilihan
 	choiceVotes := make(map[int]int)
 	for _, pc := range pollChoices {
-		voteCount, err := pc.GetVotePercentage(int(pollID))
+		voteCount, err := pc.GetVotePercentage(int(poll_id))
 		if err != nil {
 			log.Println("Failed to get vote percentage for choice:", err)
 			return nil, err
@@ -185,7 +183,7 @@ func GetPollingResultsByID(pollID uint) ([]map[string]interface{}, error) {
 
 	// Ambil data polling berdasarkan ID
 	var polling Poll
-	if err := db.First(&polling, pollID).Error; err != nil {
+	if err := db.First(&polling, poll_id).Error; err != nil {
 		log.Println("Failed to fetch polling:", err)
 		return nil, err
 	}
@@ -194,10 +192,10 @@ func GetPollingResultsByID(pollID uint) ([]map[string]interface{}, error) {
 	for i, pc := range pollChoices {
 		formattedResults[i] = map[string]interface{}{
 			"poll_choice": map[string]interface{}{
-				"id":         pc.ID,
-				"choice_text": pc.Choice_text,
+				"id":           pc.ID,
+				"choice_text":  pc.Choice_text,
 				"choice_image": pc.Choice_image,
-				"title":      polling.Title,
+				"title":        polling.Title,
 			},
 			"percentage": choiceVotes[pc.ID],
 		}
