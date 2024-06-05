@@ -5,20 +5,22 @@ import (
 	"api-polling/system/database"
 	"errors"
 	"log"
+	"time"
 
 	"github.com/labstack/echo"
 	"gorm.io/gorm"
 )
 
 type Poll struct {
-	ID             int    `gorm:"column:id"`
-	Title          string `gorm:"column:title"`
-	Question       string `gorm:"column:question"`
-	Question_text  string `gorm:"column:question_text"`
-	Question_image string `gorm:"column:question_image"`
-	ImageURL       string `gorm:"column:image_url"`
-	Options_type   string `gorm:"column:options_type"`
-	Banner_type    string `gorm:"column:banner_type"`
+	ID             int        `gorm:"column:id"`
+	Title          string     `gorm:"column:title"`
+	Question_text  string     `gorm:"column:question_text"`
+	Question_image string     `gorm:"column:question_image"`
+	ImageURL       string     `gorm:"column:image_url"`
+	Options_type   string     `gorm:"column:options_type"`
+	// Banner_type    string     `gorm:"column:banner_type"`
+	Start_date     time.Time `gorm:"column:start_date"`
+	End_date       time.Time `gorm:"column:end_date"`
 }
 
 func (m *Poll) TableName() string {
@@ -124,15 +126,11 @@ func (p *Poll) CheckPollStatus(e echo.Context, userID int) (bool, bool, error) {
 	}
 	isSubmitted := userAnswerCount > 0
 
-	var totalPollChoices int64
-	if err := database.GetDB().Model(&Poll_Choices{}).Where("poll_id = ?", p.ID).Count(&totalPollChoices).Error; err != nil {
-		return false, false, err
-	}
+	isEnded := time.Now().After(p.End_date) 
 
-	isEnded := userAnswerCount == totalPollChoices
-
-	return isSubmitted, isEnded, nil
+    return isSubmitted, isEnded, nil
 }
+
 
 // Fungsi untuk mendapatkan persentase vote pada pilihan
 func (pc *Poll_Choices) GetVotePercentage(poll_id int) (float64, error) {
@@ -157,6 +155,19 @@ func (pc *Poll_Choices) GetVotePercentage(poll_id int) (float64, error) {
 	}
 
 	return percentage, nil
+}
+
+func (p *Poll) GetBannerType() string {
+	if p.Options_type == "list" {
+		if p.Question_image != "" {
+			return "question"
+		} else {
+			return "none"
+		}
+	} else if p.Options_type == "grid" {
+		return "image"
+	}
+	return "none"
 }
 
 // Fungsi hasil polling berdasarkan ID polling

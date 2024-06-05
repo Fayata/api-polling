@@ -45,20 +45,11 @@ func ByID(e echo.Context) error {
 		}
 	}
 
-	isSubmitted, isEnded := false, false
-	for _, ua := range userAnswers {
-		if ua.Poll_Id == id {
-			isSubmitted = true
-			break
-		}
+	// Check if poll is submitted and ended
+	isSubmitted, isEnded, err := polling.CheckPollStatus(e, id)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memeriksa status polling")
 	}
-
-	if isSubmitted && len(userAnswers) == len(pollChoices) {
-		isEnded = 
-		true
-	}
-	
-
 	// Format pilihan (choices) untuk respons
 	formattedChoices := make([]map[string]interface{}, len(pollChoices))
 	for i, choice := range pollChoices {
@@ -69,8 +60,6 @@ func ByID(e echo.Context) error {
 				break
 			}
 		}
-
-        // Dapatkan vote percentage dari fungsi di model PollChoice
 		votePercentage, err := choice.GetVotePercentage(id)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil persentase suara")
@@ -80,23 +69,22 @@ func ByID(e echo.Context) error {
 			"id":          choice.ID,
 			"label":       choice.Choice_text,
 			"image_url":   choice.Choice_image,
-			"value":       votePercentage, 
+			"value":       votePercentage,
 			"is_selected": isSelected,
 		}
 	}
 
-
 	response := map[string]interface{}{
 		"data": map[string]interface{}{
-			"id":         polling.ID,
-			"title":      polling.Title,
-			"question":   polling.Question_text,
+			"id":       polling.ID,
+			"title":    polling.Title,
+			"question": polling.Question_text,
 			"option": map[string]interface{}{
 				"type": polling.Options_type,
-				"data": formattedChoices, 
+				"data": formattedChoices,
 			},
 			"banner": map[string]interface{}{
-				"type": polling.Banner_type,
+				"type": polling.GetBannerType(),
 				"url":  polling.Question_image,
 			},
 			"is_submitted": isSubmitted,
