@@ -11,22 +11,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type Poll struct {
-	ID             int        `gorm:"column:id"`
-	Title          string     `gorm:"column:title"`
-	Question_text  string     `gorm:"column:question_text"`
-	Question_image string     `gorm:"column:question_image"`
-	ImageURL       string     `gorm:"column:image_url"`
-	Options_type   string     `gorm:"column:options_type"`
-	// Banner_type    string     `gorm:"column:banner_type"`
-	Start_date     time.Time `gorm:"column:start_date"`
-	End_date       time.Time `gorm:"column:end_date"`
-}
-
-func (m *Poll) TableName() string {
-	return "poll"
-}
-
 type Poll_Choices struct {
 	ID           int    `gorm:"column:id"`
 	PollID       int    `gorm:"column:poll_id"`
@@ -54,55 +38,6 @@ func (m *User_Answer) TableName() string {
 	return "user_answer"
 }
 
-///////////////////CMS////////////////////
-
-func (p *Poll) Create() error {
-	db := database.GetDB()
-	// Create polling and its choices in a transaction
-	err := db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(p).Error; err != nil {
-			return err
-		}
-		return nil
-	})
-
-	if err != nil {
-		log.Println("Gagal membuat polling baru:", err)
-		return err
-	}
-
-	return nil
-}
-
-func (p *Poll) Update(id int) error {
-	db := database.GetDB()
-	var existingPolling Poll
-	if err := db.First(&existingPolling, id).Error; err != nil {
-		return err
-	}
-
-	existingPolling.Title = p.Title
-	// existingPolling.Choices = p.Choices
-
-	if err := db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&existingPolling).Error; err != nil {
-		log.Println("Gagal mengupdate data polling:", err)
-		return err
-	}
-
-	return nil
-}
-
-func (p *Poll) Delete(id int) error {
-	db := database.GetDB()
-	if err := db.Where("id = ?", id).Delete(&Poll_Choices{}).Error; err != nil {
-		return err
-	}
-
-	if err := db.Delete(&Poll{}, id).Error; err != nil {
-		return err
-	}
-	return nil
-}
 
 ////////////////////USERS///////////////////
 
@@ -126,11 +61,10 @@ func (p *Poll) CheckPollStatus(e echo.Context, userID int) (bool, bool, error) {
 	}
 	isSubmitted := userAnswerCount > 0
 
-	isEnded := time.Now().After(p.End_date) 
+	isEnded := time.Now().After(p.End_date)
 
-    return isSubmitted, isEnded, nil
+	return isSubmitted, isEnded, nil
 }
-
 
 // Fungsi untuk mendapatkan persentase vote pada pilihan
 func (pc *Poll_Choices) GetVotePercentage(poll_id int) (float32, error) {
