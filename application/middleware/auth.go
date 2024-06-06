@@ -74,7 +74,6 @@ func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			log.Println("Error saat mengambil data user:", err)
 			return echo.NewHTTPError(http.StatusInternalServerError, "Terjadi kesalahan")
 		}
-
 		e.Set("user_id", int(userID))
 
 		return next(e)

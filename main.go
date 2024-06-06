@@ -14,6 +14,9 @@ import (
 )
 
 func main() {
+	var (
+		isAutoMigrate = app.Load.Database.AutoMigrate
+	)
 	// Load .env file
 	err := godotenv.Overload()
 	if err != nil {
@@ -24,18 +27,20 @@ func main() {
 	database.InitDB()
 
 	// AutoMigrate models
-	err = database.GetDB().AutoMigrate(
-		// &models.User{},
-		&models.Poll{},
-		&models.Poll_Choices{},
-		&models.User_Answer{},
-		&models.Poll_Result{},
-		// &models.Quiz{},
-		// &models.QuizOption{},
-		// &models.UserQuizAnswer{},
-	)
-	if err != nil {
-		log.Fatal("Error migrating database:", err)
+	if isAutoMigrate {
+		err = database.GetDB().AutoMigrate(
+			// &models.User{},
+			&models.Poll{},
+			&models.Poll_Choices{},
+			&models.User_Answer{},
+			&models.Poll_Result{},
+			// &models.Quiz{},
+			// &models.QuizOption{},
+			// &models.UserQuizAnswer{},
+		)
+		if err != nil {
+			log.Fatal("Error migrating database:", err)
+		}
 	}
 
 	webServer := routes.AppRoute()

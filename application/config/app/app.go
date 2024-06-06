@@ -13,11 +13,12 @@ type webServer struct {
 }
 
 type database struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	Name     string
+	AutoMigrate bool
+	Host        string
+	Port        string
+	User        string
+	Password    string
+	Name        string
 }
 
 func init() {

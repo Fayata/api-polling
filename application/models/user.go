@@ -12,7 +12,7 @@ type User struct {
 	Password string           `gorm:"column:password"`
 	Token    string           `gorm:"column:token"`
 	UserC    []UserChoice     `gorm:"foreignKey:UserID;references:ID"`
-	UserQ    []UserQuizAnswer `gorm:"foreignKey:UserID;references:ID"`
+	UserQ    []UserAnswer `gorm:"foreignKey:UserID;references:ID"`
 }
 
 func (m *User) TableName() string {

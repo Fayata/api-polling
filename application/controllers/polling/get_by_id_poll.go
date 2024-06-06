@@ -79,8 +79,6 @@ func ByID(e echo.Context) error {
 
 	message := "Success"
 	code := 0
-
-	// Ubah pesan dan kode status jika ada error
 	if err != nil {
 		message = err.Error()
 		code = 1
@@ -109,8 +107,8 @@ func ByID(e echo.Context) error {
 			},
 		},
 		"status": map[string]interface{}{
-			"code":    code,    // Gunakan kode status yang sesuai
-			"message": message, // Gunakan pesan yang sesuai
+			"code":    code,   
+			"message": message, 
 		},
 	}
 

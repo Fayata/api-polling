@@ -12,29 +12,24 @@ import (
 
 func Answer(e echo.Context) error {
 
-	type AddQuizAnswerRequest struct {
-		OptionID       uint `json:"option_id"`
-		QuestionNumber uint `json:"question_number"`
-	}
-    var req AddQuizAnswerRequest
-    if err := e.Bind(&req); err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
-    }
 
-    var quizOption models.QuizOption
-    if err := database.GetDB().First(&quizOption, req.OptionID).Error; err != nil {
+    var quizOption models.QuizQuestionChoice
+    if err := database.GetDB().First(&quizOption, quizOption.QuestionID).Error; err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Invalid option_id")
     }
 
     var quiz models.Quiz
-    if err := database.GetDB().First(&quiz, quizOption.QuizID).Error; err != nil {
+    if err := database.GetDB().First(&quiz, quizOption.ID).Error; err != nil {
         return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil data quiz")
     }
+    var quizQ models.QuizQuestion
+   
 
-    userAnswer := models.UserQuizAnswer{
-        OptionID: req.OptionID,
+    userAnswer := models.UserAnswer{
+        QuestionID: uint(quizQ.ID),
         UserID:   int(e.Get("user_id").(int)),
-        QuizID:   quizOption.QuizID,
+        ChoiceID: uint(quizOption.ID),
+        QuizID:   uint(quiz.ID),
     }
 
     if err := database.GetDB().Create(&userAnswer).Error; err != nil {
@@ -51,7 +46,7 @@ func Answer(e echo.Context) error {
         "meta": map[string]interface{}{
             "questions": map[string]interface{}{
                 "total":   totalQuizzes,
-                "current": req.QuestionNumber,
+                "current": 0,
             },
         },
         "status": map[string]interface{}{

@@ -17,6 +17,7 @@ func GetQuizByID(e echo.Context) error {
     }
 
     var quiz models.Quiz
+    var question models.QuizQuestion
 
     // Get quiz by ID
     err = database.GetDB().Preload("Options").First(&quiz, id).Error
@@ -35,7 +36,7 @@ func GetQuizByID(e echo.Context) error {
     }
 
     // Ambil total pertanyaan dan pertanyaan saat ini (asumsikan hanya ada satu quiz)
-    totalQuestions, currentQuestion, err := quiz.GetQuizPosition() 
+    currentQuestion, err := quiz.GetQuizPosition() 
     if err != nil {
         return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mendapatkan posisi quiz")
     }
@@ -44,22 +45,26 @@ func GetQuizByID(e echo.Context) error {
     response := map[string]interface{}{
         "data": map[string]interface{}{
             "id":         quiz.ID,
-            "title":      quiz.Title,
+            "title":      quiz.Name,
             "question":   quiz.Question,
             "option": map[string]interface{}{
-                "type": quiz.Type, // Atau ganti sesuai kebutuhan
-                "data": quiz.Options,
+                "data": map[string]interface{}{
+                    "id": question.ID,
+                    "label":question.QuestionText,
+                    "quiz_id":question.QuizID,
+                    "image_url":question.QuestionImage,
+                },
             },
             "banner": map[string]interface{}{
-                "type": quiz.Type,
-                "url":  quiz.URL,
+                "type": quiz.IsActive,
+                "url":  question.QuestionImage,
             },
             "is_submitted": isSubmitted,
             "is_ended":     isEnded,
         },
         "meta": map[string]interface{}{
             "questions": map[string]interface{}{
-                "total":   totalQuestions,
+                "total":   quiz.TotalQuestion,
                 "current": currentQuestion,
             },
         },
