@@ -10,7 +10,7 @@ import (
 
 type Quiz struct {
 	ID            int            `gorm:"column:id"`
-	Name          string         `gorm:"column:name`
+	Name          string         `gorm:"column:name"`
 	TotalQuestion string         `gorm:"column:total_question"`
 	IsActive      string         `gorm:"column:is_active"`
 	StartDate     time.Time      `gorm:"column:start_date"`
@@ -26,8 +26,6 @@ type QuizQuestionChoice struct {
 	ChoiceText  string               `gorm:"column:choice_text"`
 	ChoiceImage string               `gorm:"column:choice_image"`
 	IsCorrect   bool                 `gorm:"column:is_correct"`
-	UserA       []UserAnswer         `gorm:"foreignKey:ChoiceID;references:ID"`
-	QuizC       []QuizQuestionChoice `gorm:"foreignKey:ChoiceID;references:ID"`
 }
 
 type QuizQuestion struct {
@@ -36,8 +34,7 @@ type QuizQuestion struct {
 	Number        int          `gorm:"column:number"`
 	QuestionText  string       `gorm:"column:question_text"`
 	QuestionImage string       `gorm:"column:question_image"`
-	QuestionURL   string       `gorm:"column:question_url`
-	UserA         []UserAnswer `gorm:"foreignKey:QuestionID;references:ID"`
+	QuestionURL   string       `gorm:"column:question_url"`
 }
 
 type UserAnswer struct {

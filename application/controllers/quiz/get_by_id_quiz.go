@@ -25,17 +25,16 @@ func GetQuizByID(e echo.Context) error {
         return echo.NewHTTPError(http.StatusNotFound, "Quiz tidak ditemukan")
     }
 	
-    userID := e.Get("user_id").(int) // Mengambil user_id dari token
+    userID := e.Get("user_id").(int) 
 
     // Check if quiz is submitted and ended
-    isSubmitted, isEnded, err := quiz.CheckQuizStatus(e, uint(userID)) // Memanggil dengan user_id
+    isSubmitted, isEnded, err := quiz.CheckQuizStatus(e, uint(userID)) 
     if err != nil {
         // Tangani kesalahan jika ada
         log.Println("Gagal memeriksa status quiz:", err)
         return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memeriksa status quiz")
     }
 
-    // Ambil total pertanyaan dan pertanyaan saat ini (asumsikan hanya ada satu quiz)
     currentQuestion, err := quiz.GetQuizPosition() 
     if err != nil {
         return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mendapatkan posisi quiz")
@@ -48,6 +47,7 @@ func GetQuizByID(e echo.Context) error {
             "title":      quiz.Name,
             "question":   quiz.Question,
             "option": map[string]interface{}{
+                //"type": 
                 "data": map[string]interface{}{
                     "id": question.ID,
                     "label":question.QuestionText,
