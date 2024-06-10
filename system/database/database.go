@@ -28,10 +28,10 @@ func (d *Database) DbPolling()(DBPolling *gorm.DB, err error){
     loadEnv()
         dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
             os.Getenv("DB_POLLING_USER"),
-            os.Getenv("DB_PASSWORD"),
-            os.Getenv("DB_HOST"),
-            os.Getenv("DB_PORT"),
-            os.Getenv("DB_NAME"),
+            os.Getenv("DB_POLLING_PASSWORD"),
+            os.Getenv("DB_POLLING_HOST"),
+            os.Getenv("DB_POLLING_PORT"),
+            os.Getenv("DB_POLLING_NAME"),
         )
         return gorm.Open(mysql.Open(dsn), &gorm.Config{})
 }
@@ -40,10 +40,10 @@ func (d *Database) DbQuiz()(DBPolling *gorm.DB, err error){
     loadEnv()
         qsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
             os.Getenv("DB_QUIZ_USER"),
-            os.Getenv("DB_PASSWORD"),
-            os.Getenv("DB_HOST"),
-            os.Getenv("DB_PORT"),
-            os.Getenv("DB_NAME"),
+            os.Getenv("DB_QUIZ_PASSWORD"),
+            os.Getenv("DB_QUIZ_HOST"),
+            os.Getenv("DB_QUIZ_PORT"),
+            os.Getenv("DB_QUIZ_NAME"),
         )
         return gorm.Open(mysql.Open(qsn), &gorm.Config{})
 }
