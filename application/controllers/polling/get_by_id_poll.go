@@ -15,7 +15,7 @@ func ByID(e echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Poll_id tidak valid")
 	}
 
-	db := database.GetDB()
+	db, err := database.InitDB().DbPolling()
 
 	// Mengambil semua data yang diperlukan
 	var polling models.Poll

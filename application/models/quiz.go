@@ -2,6 +2,7 @@ package models
 
 import (
 	"api-polling/system/database"
+	
 	"time"
 
 	"github.com/labstack/echo"
@@ -45,22 +46,31 @@ type UserAnswer struct {
 	QuestionID uint `gorm:"column:question_id"`
 }
 
-func (q *Quiz) GetByID(id int) error {
-	db := database.GetDB()
+func (q *Quiz) GetByID(id int) (err error) {
+	db,err := database.InitDB().DbQuiz()
+	if err != nil {
+		return db.Preload("Options").Find(q, id).Error
+	}
 	return db.Preload("Options").Find(q, id).Error
 }
 
 func (q *Quiz) GetAll() ([]Quiz, error) {
 	var quizzes []Quiz
-	db := database.GetDB()
-	err := db.Find(&quizzes).Error
+	db, err := database.InitDB().DbQuiz()
+	if err != nil{
+		return quizzes, err
+	}
+	err = db.Find(&quizzes).Error
 	return quizzes, err
 }
 
 func (q *Quiz) GetTotalQuizzes() (int64, error) {
-	db := database.GetDB()
+	db, err := database.InitDB().DbQuiz()
+	if err != nil{
+		return 0, err
+	}
 	var total int64
-	if err := db.Model(&Quiz{}).Count(&total).Error; err != nil {
+	if err = db.Model(&Quiz{}).Count(&total).Error; err != nil {
 		return 0, err
 	}
 	return total, nil
@@ -68,7 +78,11 @@ func (q *Quiz) GetTotalQuizzes() (int64, error) {
 
 func (q *Quiz) CheckQuizStatus(e echo.Context, userID uint) (bool, bool, error) {
 	var userAnswer UserAnswer
-	err := database.GetDB().Where("user_id = ? AND quiz_id = ?", userID, q.ID).First(&userAnswer).Error
+	db,err := database.InitDB().DbQuiz() 
+	if err != nil{
+		return false, false, err
+	}
+	err = db.Where("user_id = ? AND quiz_id = ?", userID, q.ID).First(&userAnswer).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, false, err
 	}
@@ -81,11 +95,13 @@ func (q *Quiz) CheckQuizStatus(e echo.Context, userID uint) (bool, bool, error) 
 
 // Fungsi untuk mendapatkan posisi kuis dan total kuis
 func (q *Quiz) GetQuizPosition() (int64, error) {
-	db := database.GetDB()
-
+	db, err := database.InitDB().DbQuiz()
+	if err != nil{
+		return 0, err
+	}
 	// Cari posisi quiz saat ini berdasarkan ID
 	var currentQuizPosition int64
-	if err := db.Model(&Quiz{}).Where("id < ?", q.ID).Count(&currentQuizPosition).Error; err != nil {
+	if err = db.Model(&Quiz{}).Where("id < ?", q.ID).Count(&currentQuizPosition).Error; err != nil {
 		return 0, err
 	}
 

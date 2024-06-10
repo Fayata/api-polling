@@ -14,12 +14,13 @@ func Answer(e echo.Context) error {
 
 
     var quizOption models.QuizQuestionChoice
-    if err := database.GetDB().First(&quizOption, quizOption.QuestionID).Error; err != nil {
+    db, err:= database.InitDB().DbQuiz()
+    if err := db.First(&quizOption, quizOption.QuestionID).Error; err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Invalid option_id")
     }
 
     var quiz models.Quiz
-    if err := database.GetDB().First(&quiz, quizOption.ID).Error; err != nil {
+    if err := db.First(&quiz, quizOption.ID).Error; err != nil {
         return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil data quiz")
     }
     var quizQ models.QuizQuestion
@@ -32,7 +33,7 @@ func Answer(e echo.Context) error {
         QuizID:   uint(quiz.ID),
     }
 
-    if err := database.GetDB().Create(&userAnswer).Error; err != nil {
+    if err := db.Create(&userAnswer).Error; err != nil {
         return echo.NewHTTPError(http.StatusInternalServerError, "Gagal menyimpan jawaban")
     }
 

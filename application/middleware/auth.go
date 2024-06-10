@@ -1,24 +1,33 @@
 package middleware
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 
-	"api-polling/application/models"
-	"api-polling/system/database"
-
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"gorm.io/gorm"
 )
 
+type TokenRplus struct {
+	Vid       int    `json:"vid"`
+	Token     string `json:"token"`
+	Pl        string `json:"pl"`
+	Device    string `json:"device_id"`
+	LoginType string `json:"ltype"`
+}
+
+type TokenExisting struct {
+	Id    int    `json:"id"`
+	Email string `json:"email"`
+}
 
 func getEnv(key, defaultValue string) string {
 	log.Printf("===> %v", os.Getenv("JWT_SECRET"))
-	
+
 	val, exists := os.LookupEnv(key)
 	if !exists {
 		return defaultValue
@@ -49,10 +58,10 @@ func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			return jwtSecret, nil
 		})
-		if err != nil || !token.Valid {
-			log.Println("Token tidak valid:", err)
-			return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak validi")
-		}
+		// if err != nil || !token.Valid {
+		// 	log.Println("Token tidak valid:", err)
+		// 	return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak validi")
+		// }
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
@@ -60,21 +69,23 @@ func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak valied")
 		}
 
-		userID, ok := claims["id"].(float64)
-		if !ok {
-			log.Println("Format klaim user_id tidak valid")
-			return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak valid")
+		claimsByte, err := json.Marshal(claims)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed marshal")
 		}
+		var tokenRplus TokenRplus
+		json.Unmarshal(claimsByte, &tokenRplus)
 
-		var user models.User
-		if err := database.GetDB().First(&user, int(userID)).Error; err != nil {
-			if err == gorm.ErrRecordNotFound {
-				return echo.NewHTTPError(http.StatusUnauthorized, "User tidak ditemukan")
-			}
-			log.Println("Error saat mengambil data user:", err)
-			return echo.NewHTTPError(http.StatusInternalServerError, "Terjadi kesalahan")
-		}
-		e.Set("user_id", int(userID))
+		// var user models.User
+		// if err := database.GetDB().First(&user, tokenRplus.Vid).Error; err != nil {
+		// 	if err == gorm.ErrRecordNotFound {
+		// 		return echo.NewHTTPError(http.StatusUnauthorized, "User tidak ditemukan")
+		// 	}
+		// 	log.Println("Error saat mengambil data user:", err)
+		// 	return echo.NewHTTPError(http.StatusInternalServerError, "Terjadi kesalahan")
+		// }
+
+		e.Set("user_id", tokenRplus.Vid)
 
 		return next(e)
 	}

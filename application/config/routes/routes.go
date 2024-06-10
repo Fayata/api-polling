@@ -14,7 +14,7 @@ func AppRoute() *echo.Echo {
 	e := echo.New()
 	middleware.SetCORS(e)
 
-	e.POST("api/v1/login", controllers_polling.Login)
+	// e.POST("api/v1/login", controllers_polling.Login)
 	//Admin routes
 	e.PUT("api/v1/cms/polling/:id", controllers_cms.Update)
 	e.DELETE("api/v1/cms/polling/:id", controllers_cms.Delete)

@@ -20,7 +20,8 @@ func GetQuizByID(e echo.Context) error {
     var question models.QuizQuestion
 
     // Get quiz by ID
-    err = database.GetDB().Preload("Options").First(&quiz, id).Error
+    db, err := database.InitDB().DbQuiz()
+    err = db.Preload("Options").First(&quiz, id).Error
     if err != nil {
         return echo.NewHTTPError(http.StatusNotFound, "Quiz tidak ditemukan")
     }

@@ -28,7 +28,8 @@ func main() {
 
 	// AutoMigrate models
 	if isAutoMigrate {
-		err = database.GetDB().AutoMigrate(
+		db, err:= database.InitDB().DbPolling()
+		err = db.AutoMigrate(
 			// &models.User{},
 			&models.Poll{},
 			&models.Poll_Choices{},
@@ -39,10 +40,19 @@ func main() {
 			// &models.UserQuizAnswer{},
 		)
 		if err != nil {
-			log.Fatal("Error migrating database:", err)
+			log.Fatal("Error migrating database: Polling", err)
+		}
+		dbq, err:= database.InitDB().DbQuiz()
+		err = dbq.AutoMigrate(
+			&models.Quiz{},
+			&models.QuizQuestion{},
+			&models.QuizQuestionChoice{},
+			&models.UserAnswer{},
+		)
+		if err != nil{
+			log.Fatal("Error migrating database: Quiz", err)
 		}
 	}
-
 	webServer := routes.AppRoute()
 	webServerConfig := fmt.Sprintf("%v:%v", app.Load.WebServer.Host, app.Load.WebServer.Port)
 	webServer.Logger.Fatal(webServer.Start(webServerConfig))
