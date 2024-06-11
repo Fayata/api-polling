@@ -118,9 +118,9 @@ func (p *Poll) Delete(id int) error {
 func (p *Poll) GetByID(id int) (err error) {
 	db, err := database.InitDB().DbPolling()
 	if err != nil {
-		return db.Preload("Choices").Find(p, id).Error
+		return db.Find(p, id).Error
 	}
-	return db.Preload("Choices").Find(p, id).Error
+	return db.Find(p, id).Error
 }
 
 func (up *Poll) GetAll() ([]Poll, error) {
@@ -215,7 +215,6 @@ func GetPollingResultsByID(poll_id uint) ([]map[string]interface{}, error) {
 		choiceVotes[pc.ID] = int(voteCount)
 	}
 
-	// Ambil data polling berdasarkan ID
 	var polling Poll
 	if err := db.First(&polling, poll_id).Error; err != nil {
 		log.Println("Failed to fetch polling:", err)

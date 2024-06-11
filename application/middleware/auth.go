@@ -58,10 +58,6 @@ func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			return jwtSecret, nil
 		})
-		// if err != nil || !token.Valid {
-		// 	log.Println("Token tidak valid:", err)
-		// 	return echo.NewHTTPError(http.StatusUnauthorized, "Token tidak validi")
-		// }
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
@@ -75,15 +71,6 @@ func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 		var tokenRplus TokenRplus
 		json.Unmarshal(claimsByte, &tokenRplus)
-
-		// var user models.User
-		// if err := database.GetDB().First(&user, tokenRplus.Vid).Error; err != nil {
-		// 	if err == gorm.ErrRecordNotFound {
-		// 		return echo.NewHTTPError(http.StatusUnauthorized, "User tidak ditemukan")
-		// 	}
-		// 	log.Println("Error saat mengambil data user:", err)
-		// 	return echo.NewHTTPError(http.StatusInternalServerError, "Terjadi kesalahan")
-		// }
 
 		e.Set("user_id", tokenRplus.Vid)
 

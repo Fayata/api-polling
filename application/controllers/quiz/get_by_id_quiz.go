@@ -10,6 +10,15 @@ import (
 	"github.com/labstack/echo"
 )
 
+type QuestionData struct {
+	ID            int    `json:"id"`
+	QuizID        int    `json:"quiz_id"`
+	Number        int    `json:"number"`
+	QuestionText  string `json:"question_text"`
+	QuestionImage string `json:"question_image"`
+	Choices []models.QuizQuestionChoice `json:"choices"`
+}
+
 func GetQuizByID(e echo.Context) error {
 	id, err := strconv.Atoi(e.Param("id"))
 	if err != nil {
@@ -46,22 +55,43 @@ func GetQuizByID(e echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mendapatkan posisi quiz")
 	}
+	//Mengambil data question
+
+	questionDataArr, err := models.GetQuestionByQuizId(id)
+	if err != nil {
+		log.Println("Gagal mendapatkan question")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mendapatkan posisi question")
+	}
+
+	var questionResults []QuestionData
+	for _, value := range questionDataArr {
+		var questionResult QuestionData
+		questionResult.ID = value.ID
+		questionResult.Number = value.Number
+		questionResult.QuestionImage = value.QuestionImage
+		questionResult.QuestionText = value.QuestionText
+		questionResult.QuizID = value.QuizID
+
+		// get question choices
+		choiceDataArr, err := models.GetChoiceByQuestionId(value.ID)
+		if err != nil {
+			log.Println("failed to get question choices")
+			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get question choices")
+		}
+		for index, valueChoice := range choiceDataArr {
+			choiceDataArr[index].QuestionType = models.GetQuestionType(valueChoice.ChoiceImage)
+		}
+		questionResult.Choices = choiceDataArr
+		questionResults = append(questionResults, questionResult)
+	}
 
 	// Format response sesuai dengan struktur yang diinginkan
 	response := map[string]interface{}{
 		"data": map[string]interface{}{
 			"id":       quiz.ID,
 			"title":    quiz.Name,
-			"question": question.QuestionText,
-			"option": map[string]interface{}{
-				// "type":
-				"data": map[string]interface{}{
-					"id":        question.ID,
-					"label":     question.QuestionText,
-					"quiz_id":   question.QuizID,
-					"image_url": question.QuestionImage,
-				},
-			},
+			"question": questionResults,
+
 			"banner": map[string]interface{}{
 				"type": quiz.IsActive,
 				"url":  question.QuestionImage,
@@ -80,6 +110,15 @@ func GetQuizByID(e echo.Context) error {
 			"message": "Success",
 		},
 	}
+	// if err != nil {
+	// 	response["status"].(map[string]interface{})["code"] = 1
+	// 	response["status"].(map[string]interface{})["message"] = err.Error()
+	// 	if err.Error() == "user has already polled" {
+	// 		return e.JSON(http.StatusBadRequest, response)
+	// 	} else {
+	// 		return e.JSON(http.StatusInternalServerError, response)
+	// 	}
+	// }
 
 	return e.JSON(http.StatusOK, response)
 }

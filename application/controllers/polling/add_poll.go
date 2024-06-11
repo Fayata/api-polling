@@ -14,9 +14,12 @@ func AddPoll(e echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
 	}
 
+
+	userID := e.Get("user_id").(int)
+
 	userChoice := models.User_Answer{
 		Choice_id: req.Choice_id,
-		User_Id:   req.User_Id,
+		User_Id:   userID,
 	}
 
 	pollIDStr := e.Param("id")
