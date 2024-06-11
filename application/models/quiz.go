@@ -2,6 +2,8 @@ package models
 
 import (
 	"api-polling/system/database"
+	"errors"
+	"log"
 
 	"time"
 
@@ -44,9 +46,9 @@ type QuizQuestion struct {
 
 type UserAnswer struct {
 	UserID     int  `gorm:"column:user_id"`
-	QuizID     uint `gorm:"column:quiz_id"`
+	QuizID     int `gorm:"column:quiz_id"`
 	ChoiceID   uint `gorm:"column:choice_id"`
-	QuestionID uint `gorm:"column:question_id"`
+	QuestionID int `gorm:"column:question_id"`
 }
 
 func (m *UserAnswer) TableName() string {
@@ -69,6 +71,26 @@ func (q *Quiz) GetAll() ([]Quiz, error) {
 	}
 	err = db.Find(&quizzes).Error
 	return quizzes, err
+}
+
+func (uc *UserAnswer) AddQuiz() error {
+	db, err := database.InitDB().DbPolling()
+	if err != nil {
+		return err
+	}
+	// Check if the user has already polled
+	var existingVote UserAnswer
+	err = db.Where("user_id = ?, quiz_id = ?, question_id = ?", uc.UserID, uc.QuizID, uc.QuestionID).First(&existingVote).Error
+	if err == nil {
+		return errors.New("user has already polled")
+	}
+
+	if err := db.Create(uc).Error; err != nil {
+		log.Println("Failed to add poll:", err)
+		return err
+	}
+
+	return nil
 }
 
 func (q *Quiz) GetTotalQuizzes() (int64, error) {

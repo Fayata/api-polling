@@ -4,37 +4,48 @@ import (
 	"api-polling/application/models"
 	"api-polling/system/database"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo"
 )
 
 func Answer(e echo.Context) error {
 
+	var req models.UserAnswer
+	var quiz models.Quiz
 	var quizOption models.QuizQuestionChoice
+	if err := e.Bind(&req); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request body")
+	}
+
 	db, err := database.InitDB().DbQuiz()
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Invalid option_id")
 	}
-	if err := db.First(&quizOption, quizOption.QuestionID).Error; err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid option_id")
-	}
-	var quiz models.Quiz
-	err = db.First(&quiz.ID).Error
-	if err != nil{
-		return echo.NewHTTPError(http.StatusNotFound, "Quiz tidak ditemukan")
+
+
+	userChoice := models.UserAnswer{
+		ChoiceID: req.ChoiceID,
+		UserID:   req.UserID,
 	}
 
-	var quizQ models.QuizQuestion
-	err = db.First(&quizOption.ID).Error
+	quizIDStr := e.Param("id")
+	quizID, err := strconv.Atoi(quizIDStr)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Option tidak ditemukan")
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid poll_id")
+	}
+	userChoice.QuizID = int(quizID)
+
+	err = userChoice.AddQuiz()
+	if err != nil{
+		return err
 	}
 
 	userAnswer := models.UserAnswer{
-		QuestionID: uint(quizQ.ID),
+		QuestionID: int(e.Get("question_id").(int)),
 		UserID:     int(e.Get("user_id").(int)),
 		ChoiceID:   uint(quizOption.ID),
-		QuizID:     uint(quiz.ID),
+		QuizID:     int(quiz.ID),
 	}
 
 	if err := db.Create(&userAnswer).Error; err != nil {
