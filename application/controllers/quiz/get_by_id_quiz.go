@@ -11,114 +11,100 @@ import (
 )
 
 type QuestionData struct {
-	ID            int    `json:"id"`
-	QuizID        int    `json:"quiz_id"`
-	Number        int    `json:"number"`
-	QuestionText  string `json:"question_text"`
-	QuestionImage string `json:"question_image"`
+	ID     int `json:"id"`
+	QuizID int `json:"quiz_id"`
+	Order  struct {
+		Total   int `json:"total"`
+		Current int `json:"current"`
+	} `json:"order"`
+	QuestionText string `json:"question_text"`
+	Banner       struct {
+		ShowBanner bool   `json:"show_banner"`
+		URL        string `json:"url"`
+	} `json:"banner"`
+	Type    string                      `json:"type"`
 	Choices []models.QuizQuestionChoice `json:"choices"`
 }
 
 func GetQuizByID(e echo.Context) error {
 	id, err := strconv.Atoi(e.Param("id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "ID tidak valid")
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
 	}
 
 	var quiz models.Quiz
-	var question models.QuizQuestion
 
 	// Get quiz by ID
 	db, err := database.InitDB().DbQuiz()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Quiz tidak ditemukan")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
 	}
 	err = db.First(&quiz, id).Error
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Quiz tidak ditemukan")
+		return echo.NewHTTPError(http.StatusNotFound, "Quiz not found")
 	}
-	err = db.First(&question, id).Error
-	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Option tidak ditemukan")
-	}
+
 	userID := e.Get("user_id").(int)
 
 	// Check if quiz is submitted and ended
 	isSubmitted, isEnded, err := quiz.CheckQuizStatus(e, uint(userID))
 	if err != nil {
-		// Tangani kesalahan jika ada
-		log.Println("Gagal memeriksa status quiz:", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memeriksa status quiz")
+		log.Println("Failed to check quiz status:", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
 
-	currentQuestion, err := quiz.GetQuizPosition()
+	// Fetch quiz questions with their Quiz
+	questions, err := models.GetQuestionByQuizId(id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mendapatkan posisi quiz")
-	}
-	//Mengambil data question
-
-	questionDataArr, err := models.GetQuestionByQuizId(id)
-	if err != nil {
-		log.Println("Gagal mendapatkan question")
-		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mendapatkan posisi question")
+		log.Println("Failed to get questions:", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
 
 	var questionResults []QuestionData
-	for _, value := range questionDataArr {
+	for i, question := range questions {
 		var questionResult QuestionData
-		questionResult.ID = value.ID
-		questionResult.Number = value.Number
-		questionResult.QuestionImage = value.QuestionImage
-		questionResult.QuestionText = value.QuestionText
-		questionResult.QuizID = value.QuizID
-
-		// get question choices
-		choiceDataArr, err := models.GetChoiceByQuestionId(value.ID)
+		questionResult.ID = question.ID
+		questionResult.QuestionText = question.QuestionText
+		questionResult.QuizID = question.QuizID
+		choiceDataArr, err := models.GetChoiceByQuestionId(question.ID)
 		if err != nil {
-			log.Println("failed to get question choices")
-			return echo.NewHTTPError(http.StatusInternalServerError, "failed to get question choices")
+			log.Println("Failed to get question choices:", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 		}
-		for index, valueChoice := range choiceDataArr {
-			choiceDataArr[index].QuestionType = models.GetQuestionType(valueChoice.ChoiceImage)
+		for i, choice := range choiceDataArr {
+			choiceDataArr[i].QuestionType = models.GetChoiceType(choice.ChoiceImage)
+			questionResult.Type = models.GetChoiceType(choice.ChoiceImage)
 		}
+		questionResult.Order.Total = len(questions)
+		questionResult.Order.Current = i + 1
 		questionResult.Choices = choiceDataArr
+		// questionResult.Type = models.GetChoiceType(choice.ChoiceImage)
+
+		// Get banner info (using GetQuestionType here, assuming it returns banner details)
+		questionResult.Banner.ShowBanner = models.GetQuestionType(question.QuestionImage)
+		questionResult.Banner.URL = question.QuestionImage
+
 		questionResults = append(questionResults, questionResult)
 	}
 
-	// Format response sesuai dengan struktur yang diinginkan
+	// Format the response
 	response := map[string]interface{}{
 		"data": map[string]interface{}{
-			"id":       quiz.ID,
-			"title":    quiz.Name,
-			"question": questionResults,
-
-			"banner": map[string]interface{}{
-				"type": quiz.IsActive,
-				"url":  question.QuestionImage,
-			},
+			"id":           quiz.ID,
+			"title":        quiz.Name,
+			"question":     questionResults,
 			"is_submitted": isSubmitted,
 			"is_ended":     isEnded,
 		},
 		"meta": map[string]interface{}{
-			"questions": map[string]interface{}{
-				"total":   quiz.TotalQuestion,
-				"current": currentQuestion,
-			},
+			"image_path": database.GetAppConfig().ImagePath,
+			"video_path": database.GetAppConfig().VideoPath,
 		},
 		"status": map[string]interface{}{
 			"code":    0,
 			"message": "Success",
 		},
 	}
-	// if err != nil {
-	// 	response["status"].(map[string]interface{})["code"] = 1
-	// 	response["status"].(map[string]interface{})["message"] = err.Error()
-	// 	if err.Error() == "user has already polled" {
-	// 		return e.JSON(http.StatusBadRequest, response)
-	// 	} else {
-	// 		return e.JSON(http.StatusInternalServerError, response)
-	// 	}
-	// }
 
 	return e.JSON(http.StatusOK, response)
 }
