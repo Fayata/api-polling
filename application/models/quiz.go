@@ -18,8 +18,6 @@ type Quiz struct {
 	IsActive      string    `gorm:"column:is_active"`
 	StartDate     time.Time `gorm:"column:start_date"`
 	EndDate       time.Time `gorm:"column:end_date"`
-	// UserA         []UserAnswer   `gorm:"foreignKey:QuizID;references:ID"`
-	// Question      []QuizQuestion `gorm:"foreignKey:QuizID;references:ID"`
 }
 
 func (m *Quiz) TableName() string {
@@ -27,18 +25,18 @@ func (m *Quiz) TableName() string {
 }
 
 type QuizQuestionChoice struct {
-	ID           int    `gorm:"column:id"`
-	QuestionID   uint   `gorm:"column:question_id"`
+	ID           int    `gorm:"column:id" json:"id"`
+	QuestionID   uint   `gorm:"column:question_id" json:"question_id"`
 	ChoiceText   string `gorm:"column:choice_text" json:"label"`
 	ChoiceImage  string `gorm:"column:choice_image" json:"image_url"`
-	QuestionType string `gorm:"-" json:"type"`
-	IsCorrect    bool   `gorm:"column:is_correct"`
+	QuestionType string `gorm:"-" json:"-"`
+	IsCorrect    bool   `gorm:"column:is_correct" json:"-"`
 }
 
 type QuizQuestion struct {
 	ID            int    `gorm:"column:id"`
 	QuizID        int    `gorm:"column:quiz_id"`
-	Number        int    `gorm:"column:number"`
+	Number        int    `gorm:"column:number" json:"order"`
 	QuestionText  string `gorm:"column:question_text"`
 	QuestionImage string `gorm:"column:question_image"`
 	// QuestionURL   string `gorm:"column:question_url"`
@@ -91,7 +89,15 @@ func (q *Quiz) GetAll() ([]Quiz, error) {
 	return quizzes, err
 }
 
-func GetQuestionType(choiceImage string) string {
+func GetQuestionType(questionImage string) (status bool) {
+    if questionImage == "" {
+        return false 
+    }
+    return true
+}
+
+
+func GetChoiceType(choiceImage string) string {
 	if choiceImage == "" {
 		return "text"
 	}
