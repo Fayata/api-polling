@@ -25,6 +25,7 @@ func main() {
 
 	// Initialize database connection
 	database.InitDB()
+	database.InitM()
 
 	// AutoMigrate models
 	if isAutoMigrate {

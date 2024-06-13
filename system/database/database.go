@@ -13,16 +13,19 @@ import (
 type Database struct{}
 
 type AppConfig struct {
-    ImagePath string
-    VideoPath string
+	ImagePath string
+	VideoPath string
 }
 
-var appConfig AppConfig
 
 
 func InitDB() *Database {
 	return &Database{}
 }
+
+func InitM() *AppConfig{
+	return &AppConfig{}
+} 
 
 func loadEnv() {
 	err := godotenv.Load()
@@ -55,15 +58,9 @@ func (d *Database) DbQuiz() (DBQuiz *gorm.DB, err error) {
 	return gorm.Open(mysql.Open(qsn), &gorm.Config{})
 }
 
-func Meta() {
+func Meta() (appConfig AppConfig) {
     loadEnv()
-    err := godotenv.Load()
-    if err != nil {
-        log.Fatal("Error loading .env file")
-    }
     appConfig.ImagePath = os.Getenv("APP_IMAGE_PATH")
-    appConfig.VideoPath = os.Getenv("APP_VIDEO_PATH")
-}
-func GetAppConfig() AppConfig {
-    return appConfig
+    appConfig.VideoPath = os.Getenv("APP_VIDIO_PATH")
+	return appConfig
 }

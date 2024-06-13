@@ -18,8 +18,6 @@ type Quiz struct {
 	IsActive      string    `gorm:"column:is_active"`
 	StartDate     time.Time `gorm:"column:start_date"`
 	EndDate       time.Time `gorm:"column:end_date"`
-	// UserA         []UserAnswer   `gorm:"foreignKey:QuizID;references:ID"`
-	// Question      []QuizQuestion `gorm:"foreignKey:QuizID;references:ID"`
 }
 
 func (m *Quiz) TableName() string {

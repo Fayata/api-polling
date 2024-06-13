@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-
 	"github.com/labstack/echo"
 )
 
@@ -87,6 +86,9 @@ func GetQuizByID(e echo.Context) error {
 		questionResults = append(questionResults, questionResult)
 	}
 
+	//  Get meta data
+	metaData := database.Meta()
+	
 	// Format the response
 	response := map[string]interface{}{
 		"data": map[string]interface{}{
@@ -97,8 +99,8 @@ func GetQuizByID(e echo.Context) error {
 			"is_ended":     isEnded,
 		},
 		"meta": map[string]interface{}{
-			"image_path": database.GetAppConfig().ImagePath,
-			"video_path": database.GetAppConfig().VideoPath,
+			"image_path": metaData.ImagePath,
+			"video_path": metaData.VideoPath,
 		},
 		"status": map[string]interface{}{
 			"code":    0,
