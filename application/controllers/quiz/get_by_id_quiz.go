@@ -80,7 +80,7 @@ func GetQuizByID(e echo.Context) error {
 		questionResult.Choices = choiceDataArr
 		// questionResult.Type = models.GetChoiceType(choice.ChoiceImage)
 
-		// Get banner info (using GetQuestionType here, assuming it returns banner details)
+		// Get banner info
 		questionResult.Banner.ShowBanner = models.GetQuestionType(question.QuestionImage)
 		questionResult.Banner.URL = question.QuestionImage
 
@@ -91,7 +91,7 @@ func GetQuizByID(e echo.Context) error {
 	response := map[string]interface{}{
 		"data": map[string]interface{}{
 			"id":           quiz.ID,
-			"title":        quiz.Name,
+			"quiz":         quiz.Name,
 			"question":     questionResults,
 			"is_submitted": isSubmitted,
 			"is_ended":     isEnded,
