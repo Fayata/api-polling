@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/labstack/echo"
 )
@@ -52,13 +51,17 @@ func ByID(e echo.Context) error {
 	}
 
 	// Check if poll is submitted and ended (sesuaikan logika ini)
-	isSubmitted, err := models.IsSubmitted(polling.ID, id)
+	isSubmitted, err := models.IsSubmittedPoll(polling.ID, id)
 	if err != nil {
 		log.Println("Error checking submission status:", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
 
-	isEnded := polling.End_date.Before(time.Now())
+	// isEnded, err := models.IsEnded()
+	// if err!= nil {
+    //     log.Println("Error checking poll end status:", err)
+    //     return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+    // }
 
 
 	// Format pilihan (choices) untuk respons
@@ -86,6 +89,7 @@ func ByID(e echo.Context) error {
 	}
 
 	err = polling.GetByID(polling.ID)
+	metaData := database.Meta()
 
 	message := "Success"
 	code := 0
@@ -108,13 +112,11 @@ func ByID(e echo.Context) error {
 				"url":  polling.Question_image,
 			},
 			"is_submitted": isSubmitted,
-			"is_ended":     isEnded,
+			"is_ended":     false,
 		},
 		"meta": map[string]interface{}{
-			"questions": map[string]interface{}{
-				"total":   0,
-				"current": 0,
-			},
+			"image_path": metaData.ImagePath,
+			"video_path": metaData.VideoPath,
 		},
 		"status": map[string]interface{}{
 			"code":    code,

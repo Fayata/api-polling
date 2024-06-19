@@ -134,13 +134,13 @@ func (up *Poll) GetAll() ([]Poll, error) {
 }
 
 // Fungsi untuk memeriksa apakah polling sudah disubmit dan ended
-func IsSubmittedPoll(user_id int, poll_id int) (status bool, err error) {
+func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
 	var userAnswer User_Answer
-	db, err := database.InitDB().DbQuiz()
+	db, err := database.InitDB().DbPolling()
 	if err != nil {
 		return false, err
 	}
-	err = db.Where("user_id = ? AND poll_id = ?", user_id, poll_id).Find(&userAnswer).Error
+	err = db.Where("user_id = ? AND poll_id = ?", User_Id, Poll_Id).First(&userAnswer).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
@@ -150,16 +150,16 @@ func IsSubmittedPoll(user_id int, poll_id int) (status bool, err error) {
 	return true, nil
 }
 func IsEndedPoll() (bool, error) {
-	db, err := database.InitDB().DbQuiz()
+	db, err := database.InitDB().DbPolling()
 	if err != nil {
 		return false, err
 	}
 	var poll Poll
-	err = db.Where("id = ?", poll.ID).First(&poll).Error
+	err = db.Where("id = ?", poll.ID).Find(&poll).Error
 	if err != nil {
 		return false, err
 	}
-	if poll.End_date.Before(time.Now()) {
+	if poll.End_date.After(time.Now()) {
 		return true, nil
 	}
 	return false, nil

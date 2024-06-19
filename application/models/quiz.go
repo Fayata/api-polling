@@ -166,7 +166,7 @@ func IsEnded() (bool, error) {
 	}
 	var quiz Quiz
 	err = db.Where("id = ?", quiz.ID).First(&quiz).Error
-	if err != nil {
+	if err != nil && err!= gorm.ErrRecordNotFound  {
 		return false, err
 	}
 	if quiz.EndDate.Before(time.Now()) {
