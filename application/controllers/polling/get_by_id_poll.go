@@ -57,11 +57,11 @@ func ByID(e echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
 
-	// isEnded, err := models.IsEnded()
-	// if err!= nil {
-    //     log.Println("Error checking poll end status:", err)
-    //     return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
-    // }
+	isEnded, err := models.IsEnded()
+	if err!= nil {
+        log.Println("Error checking poll end status:", err)
+        return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+    }
 
 
 	// Format pilihan (choices) untuk respons
@@ -112,7 +112,7 @@ func ByID(e echo.Context) error {
 				"url":  polling.Question_image,
 			},
 			"is_submitted": isSubmitted,
-			"is_ended":     false,
+			"is_ended":     isEnded,
 		},
 		"meta": map[string]interface{}{
 			"image_path": metaData.ImagePath,

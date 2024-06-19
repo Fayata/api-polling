@@ -150,7 +150,7 @@ func IsSubmitted(user_id int, quiz_id int) (status bool, err error) {
 	if err != nil {
 		return false, err
 	}
-	err = db.Where("user_id = ? AND quiz_id = ?", user_id, quiz_id).Find(&userAnswer).Error
+	err = db.Raw("SELECT user_id, quiz_id FROM user_answers WHERE user_id = ? AND quiz_id = ?", user_id, quiz_id).Scan(&userAnswer).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
@@ -165,7 +165,7 @@ func IsEnded() (bool, error) {
 		return false, err
 	}
 	var quiz Quiz
-	err = db.Where("id = ?", quiz.ID).First(&quiz).Error
+	err = db.Raw("SELECT id FROM quiz WHERE id = ?", quiz.ID).Scan(&quiz).Error
 	if err != nil && err!= gorm.ErrRecordNotFound  {
 		return false, err
 	}

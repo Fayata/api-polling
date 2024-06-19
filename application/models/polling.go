@@ -140,7 +140,7 @@ func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
 	if err != nil {
 		return false, err
 	}
-	err = db.Where("user_id = ? AND poll_id = ?", User_Id, Poll_Id).First(&userAnswer).Error
+	err = db.Raw("SELECT user_id, poll_id FROM user_answer WHERE user_id = ? AND poll_id = ?", User_Id, Poll_Id).Scan(&userAnswer).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
@@ -155,7 +155,7 @@ func IsEndedPoll() (bool, error) {
 		return false, err
 	}
 	var poll Poll
-	err = db.Where("id = ?", poll.ID).Find(&poll).Error
+	err = db.Raw("SELECT id FROM poll WHERE poll id = ?", poll.ID).Scan(&poll).Error
 	if err != nil {
 		return false, err
 	}
@@ -222,7 +222,7 @@ func GetPollingResultsByID(poll_id uint) ([]map[string]interface{}, error) {
 	}
 	// Ambil semua pilihan untuk pollID tertentu
 	var pollChoices []Poll_Choices
-	if err = db.Where("poll_id = ?", poll_id).Find(&pollChoices).Error; err != nil {
+	if err = db.Raw("SELECT poll_id FROM poll_choices WHERE poll_id = ?", poll_id).Scan(&pollChoices).Error; err != nil {
 		log.Println("Failed to fetch poll choices:", err)
 		return nil, err
 	}
