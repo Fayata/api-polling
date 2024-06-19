@@ -196,7 +196,7 @@ func (q *Quiz) GetQuizPosition() (int, error) {
 
 	// Fetch quiz questions with their choices
 	var questions []QuizQuestion
-	err = db.Where("quiz_id = ?", q.ID).First(&questions).Error
+	err = db.Raw("SELECT quiz_id FROM quiz_question WHERE quiz_id = ?", q.ID).First(&questions).Error
 	if err != nil {
 		return 0, err
 	}

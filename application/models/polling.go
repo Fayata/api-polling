@@ -28,10 +28,10 @@ func (m *Poll) TableName() string {
 }
 
 type Poll_Choices struct {
-	ID           int    `gorm:"column:id"`
-	PollID       int    `gorm:"column:poll_id"`
-	Choice_image string `gorm:"column:choice_image"`
-	Choice_text  string `gorm:"column:choice_text"`
+	ID           int    `gorm:"column:id" json:"id"`
+	PollID       int    `gorm:"column:poll_id" json:"poll_id"`
+	Choice_image string `gorm:"column:choice_image" json:"choice_image"`
+	Choice_text  string `gorm:"column:choice_text" json:"choice_text"`
 }
 
 type Poll_Result struct {
@@ -155,7 +155,7 @@ func IsEndedPoll() (bool, error) {
 		return false, err
 	}
 	var poll Poll
-	err = db.Raw("SELECT id FROM poll WHERE poll id = ?", poll.ID).Scan(&poll).Error
+	err = db.Raw("SELECT id FROM poll WHERE id = ?", poll.ID).Scan(&poll).Error
 	if err != nil {
 		return false, err
 	}
@@ -164,7 +164,6 @@ func IsEndedPoll() (bool, error) {
 	}
 	return false, nil
 }
-
 
 // Fungsi untuk mendapatkan persentase vote pada pilihan
 func (pc *Poll_Choices) GetVotePercentage(poll_id int) (float32, error) {
@@ -206,13 +205,12 @@ func (p *Poll) GetBannerType() string {
 	return "none"
 }
 
-func (pc *Poll_Choices) GetChoiceType() string {
-	if pc.Choice_image!= "" {
-        return "image"
-    }
-    return "text"
+func (pc *Poll_Choices) GetChoiceType(choiceImage string) string {
+	if choiceImage != "" {
+		return "image"
+	}
+	return "text"
 }
-
 
 // Fungsi hasil polling berdasarkan ID polling
 func GetPollingResultsByID(poll_id uint) ([]map[string]interface{}, error) {
