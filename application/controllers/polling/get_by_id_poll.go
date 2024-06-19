@@ -28,6 +28,7 @@ func ByID(e echo.Context) error {
 	if err := db.Find(&polling, polling).Error; err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Polling tidak ditemukan")
 	}
+	var pc models.Poll_Choices
 
 	var pollChoices []models.Poll_Choices
 	if err := db.Where("poll_id = ?", id).Find(&pollChoices).Error; err != nil {
@@ -99,7 +100,7 @@ func ByID(e echo.Context) error {
 			"title":    polling.Title,
 			"question": polling.Question_text,
 			"option": map[string]interface{}{
-				"type": polling.GetBannerType(),
+				"type": pc.GetChoiceType(),
 				"data": formattedChoices,
 			},
 			"banner": map[string]interface{}{
