@@ -53,7 +53,7 @@ func Answer(e echo.Context) error {
 	userChoice.QuizID = int(quizID)
 
 	// Panggil fungsi CheckQuizStatus model
-	status, err := models.CheckQuizStatus(userID, quizID)
+	status, err := models.IsSubmitted(userID, quizID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Invalid cek quiz status")
 	}

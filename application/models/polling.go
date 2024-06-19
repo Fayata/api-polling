@@ -4,10 +4,10 @@ import (
 	// "api-polling/application/models"
 	"api-polling/system/database"
 	"errors"
+
 	"log"
 	"time"
 
-	"github.com/labstack/echo"
 	"gorm.io/gorm"
 )
 
@@ -134,22 +134,37 @@ func (up *Poll) GetAll() ([]Poll, error) {
 }
 
 // Fungsi untuk memeriksa apakah polling sudah disubmit dan ended
-func (p *Poll) CheckPollStatus(e echo.Context, userId int) (bool, bool, error) {
-	var userChoice User_Answer
-	DB, err := database.InitDB().DbPolling()
+func IsSubmittedPoll(user_id int, poll_id int) (status bool, err error) {
+	var userAnswer User_Answer
+	db, err := database.InitDB().DbQuiz()
 	if err != nil {
-		return false, false, err
+		return false, err
 	}
-	err = DB.Where("user_id = ? AND poll_id = ?", userId, p.ID).First(&userChoice).Error
+	err = db.Where("user_id = ? AND poll_id = ?", user_id, poll_id).Find(&userAnswer).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return false, false, err
+		return false, err
 	}
-
-	isSubmitted := err == nil
-	isEnded := false
-
-	return isSubmitted, isEnded, nil
+	if err == gorm.ErrRecordNotFound {
+		return false, nil
+	}
+	return true, nil
 }
+func IsEndedPoll() (bool, error) {
+	db, err := database.InitDB().DbQuiz()
+	if err != nil {
+		return false, err
+	}
+	var poll Poll
+	err = db.Where("id = ?", poll.ID).First(&poll).Error
+	if err != nil {
+		return false, err
+	}
+	if poll.End_date.Before(time.Now()) {
+		return true, nil
+	}
+	return false, nil
+}
+
 
 // Fungsi untuk mendapatkan persentase vote pada pilihan
 func (pc *Poll_Choices) GetVotePercentage(poll_id int) (float32, error) {
@@ -190,6 +205,14 @@ func (p *Poll) GetBannerType() string {
 	}
 	return "none"
 }
+
+func (pc *Poll_Choices) GetChoiceType() string {
+	if pc.Choice_image!= "" {
+        return "image"
+    }
+    return "text"
+}
+
 
 // Fungsi hasil polling berdasarkan ID polling
 func GetPollingResultsByID(poll_id uint) ([]map[string]interface{}, error) {

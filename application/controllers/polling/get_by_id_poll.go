@@ -3,8 +3,10 @@ package controllers
 import (
 	"api-polling/application/models"
 	"api-polling/system/database"
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo"
 )
@@ -16,6 +18,9 @@ func ByID(e echo.Context) error {
 	}
 
 	db, err := database.InitDB().DbPolling()
+	if err!= nil {
+        return echo.NewHTTPError(http.StatusInternalServerError, "Gagal membuat koneksi ke database")
+    }
 
 	// Mengambil semua data yang diperlukan
 	var polling models.Poll
@@ -46,10 +51,14 @@ func ByID(e echo.Context) error {
 	}
 
 	// Check if poll is submitted and ended (sesuaikan logika ini)
-	isSubmitted, isEnded, err := polling.CheckPollStatus(e, id)
+	isSubmitted, err := models.IsSubmitted(polling.ID, id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memeriksa status polling")
+		log.Println("Error checking submission status:", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
+
+	isEnded := polling.End_date.Before(time.Now())
+
 
 	// Format pilihan (choices) untuk respons
 	formattedChoices := make([]map[string]interface{}, len(pollChoices))
@@ -90,7 +99,7 @@ func ByID(e echo.Context) error {
 			"title":    polling.Title,
 			"question": polling.Question_text,
 			"option": map[string]interface{}{
-				"type": polling.Options_type,
+				"type": polling.GetBannerType(),
 				"data": formattedChoices,
 			},
 			"banner": map[string]interface{}{
@@ -107,8 +116,8 @@ func ByID(e echo.Context) error {
 			},
 		},
 		"status": map[string]interface{}{
-			"code":    code,   
-			"message": message, 
+			"code":    code,
+			"message": message,
 		},
 	}
 

@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
+
 	"github.com/labstack/echo"
 )
 
@@ -43,14 +45,7 @@ func GetQuizByID(e echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "Quiz not found")
 	}
 
-	userID := e.Get("user_id").(int)
-
-	// Check if quiz is submitted and ended
-	isSubmitted, isEnded, err := quiz.CheckQuizStatus(e, uint(userID))
-	if err != nil {
-		log.Println("Failed to check quiz status:", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
-	}
+	// userID := e.Get("user_id").(int)
 
 	// Fetch quiz questions with their Quiz
 	questions, err := models.GetQuestionByQuizId(id)
@@ -85,10 +80,17 @@ func GetQuizByID(e echo.Context) error {
 
 		questionResults = append(questionResults, questionResult)
 	}
+	isSubmitted, err := models.IsSubmitted(quiz.ID, id)
+	if err != nil {
+		log.Println("Error checking submission status:", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+	}
+
+	isEnded := quiz.EndDate.Before(time.Now())
 
 	//  Get meta data
 	metaData := database.Meta()
-	
+
 	// Format the response
 	response := map[string]interface{}{
 		"data": map[string]interface{}{

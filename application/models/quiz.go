@@ -7,7 +7,6 @@ import (
 
 	"time"
 
-	"github.com/labstack/echo"
 	"gorm.io/gorm"
 )
 
@@ -90,12 +89,11 @@ func (q *Quiz) GetAll() ([]Quiz, error) {
 }
 
 func GetQuestionType(questionImage string) (status bool) {
-    if questionImage == "" {
-        return false 
-    }
-    return true
+	if questionImage == "" {
+		return false
+	}
+	return true
 }
-
 
 func GetChoiceType(choiceImage string) string {
 	if choiceImage == "" {
@@ -133,7 +131,7 @@ func (uc *UserAnswer) AddQuiz() error {
 	}
 	// Check if the user has already polled
 	var existingVote UserAnswer
-	err = db.Where("user_id = ?, quiz_id = ?", uc.UserID, uc.QuizID).Find(&existingVote).Error
+	err = db.Where("user_id = ?, quiz_id = ?", uc.UserID, uc.QuizID).First(&existingVote).Error
 	if err == nil {
 		return errors.New("user has already polled")
 	}
@@ -146,13 +144,13 @@ func (uc *UserAnswer) AddQuiz() error {
 	return nil
 }
 
-func CheckQuizStatus(user_id int, quiz_id int) (status bool, err error) {
+func IsSubmitted(user_id int, quiz_id int) (status bool, err error) {
 	var userAnswer UserAnswer
 	db, err := database.InitDB().DbQuiz()
 	if err != nil {
 		return false, err
 	}
-	err = db.Where("user_id = ? AND quiz_id = ?", user_id, quiz_id).First(&userAnswer).Error
+	err = db.Where("user_id = ? AND quiz_id = ?", user_id, quiz_id).Find(&userAnswer).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
@@ -160,6 +158,21 @@ func CheckQuizStatus(user_id int, quiz_id int) (status bool, err error) {
 		return false, nil
 	}
 	return true, nil
+}
+func IsEnded() (bool, error) {
+	db, err := database.InitDB().DbQuiz()
+	if err != nil {
+		return false, err
+	}
+	var quiz Quiz
+	err = db.Where("id = ?", quiz.ID).First(&quiz).Error
+	if err != nil {
+		return false, err
+	}
+	if quiz.EndDate.Before(time.Now()) {
+		return true, nil
+	}
+	return false, nil
 }
 
 func (q *Quiz) GetTotalQuizzes() (int64, error) {
@@ -174,23 +187,6 @@ func (q *Quiz) GetTotalQuizzes() (int64, error) {
 	return total, nil
 }
 
-func (q *Quiz) CheckQuizStatus(e echo.Context, userID uint) (bool, bool, error) {
-	var userAnswer UserAnswer
-	db, err := database.InitDB().DbQuiz()
-	if err != nil {
-		return false, false, err
-	}
-	err = db.Where("user_id = ? AND quiz_id = ?", userID, q.ID).First(&userAnswer).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return false, false, err
-	}
-
-	isSubmitted := err == nil
-	isEnded := false
-
-	return isSubmitted, isEnded, nil
-}
-
 // Fungsi untuk mendapatkan posisi kuis dan total kuis
 func (q *Quiz) GetQuizPosition() (int, error) {
 	db, err := database.InitDB().DbQuiz()
@@ -200,7 +196,7 @@ func (q *Quiz) GetQuizPosition() (int, error) {
 
 	// Fetch quiz questions with their choices
 	var questions []QuizQuestion
-	err = db.Where("quiz_id = ?", q.ID).Find(&questions).Error
+	err = db.Where("quiz_id = ?", q.ID).First(&questions).Error
 	if err != nil {
 		return 0, err
 	}
