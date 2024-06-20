@@ -149,14 +149,17 @@ func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
 	}
 	return true, nil
 }
-func IsEndedPoll() (bool, error) {
+
+//Function untuk memeriksa apakah polling sudah ended (Unfinished)
+func IsEndedPoll() (status bool, err error) {
+	var poll Poll
 	db, err := database.InitDB().DbPolling()
 	if err != nil {
 		return false, err
 	}
-	var poll Poll
+	
 	err = db.Raw("SELECT end_date FROM poll WHERE id = ?", poll.ID).Scan(&poll).Error
-	if err != nil {
+	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
 	if poll.End_date.Before(time.Now()) {
@@ -192,6 +195,8 @@ func (pc *Poll_Choices) GetVotePercentage(poll_id int) (float32, error) {
 	return percentage, nil
 }
 
+
+//Function for banner_type polling
 func (p *Poll) GetBannerType() string {
 	if p.Options_type == "list" {
 		if p.Question_image != "" {
@@ -205,13 +210,8 @@ func (p *Poll) GetBannerType() string {
 	return "none"
 }
 
-// func GetChoiceType(Choice_image string) string {
-// 	if Choice_image != "" {
-// 		return "image"
-// 	}
-// 	return "text"
-// }
 
+//Function for choice_type polling
 func GetChoiceType(choiceImage string) string {
 	db, err := database.InitDB().DbQuiz()
 	if err != nil {
@@ -280,6 +280,8 @@ func GetPollingResultsByID(poll_id uint) ([]map[string]interface{}, error) {
 	return formattedResults, nil
 }
 
+
+//Function for adding a new poll answer 
 func (uc *User_Answer) AddPoll() error {
 	db, err := database.InitDB().DbPolling()
 	if err != nil {

@@ -45,8 +45,6 @@ func GetQuizByID(e echo.Context) error {
         return echo.NewHTTPError(http.StatusNotFound, "Quiz not found")
     }
 
-    // userID := e.Get("user_id").(int)
-
     // Fetch quiz questions
     var questions []models.QuizQuestion
     err = db.Raw("SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY number ASC", id).Scan(&questions).Error
