@@ -57,7 +57,7 @@ func GetQuestionByQuizId(id int) (data []QuizQuestion, err error) {
 	if err != nil {
 		return data, err
 	}
-	err = db.Where("quiz_id = ?", id).Order("number asc").Find(&data).Error
+	err = db.Raw("SELECT quiz_id FROM quiz_questions WHERE quiz_id = ?", id).Order("number asc").Scan(&data).Error
 	if err != nil {
 		log.Println("Failed to fetch question", err)
 		return data, err
@@ -65,12 +65,12 @@ func GetQuestionByQuizId(id int) (data []QuizQuestion, err error) {
 	return data, err
 }
 
-func GetChoiceByQuestionId(id int) (data []QuizQuestionChoice, err error) {
+func GetChoiceByQuestionId(ID int) (data []QuizQuestionChoice, err error) {
 	db, err := database.InitDB().DbQuiz()
 	if err != nil {
 		return data, err
 	}
-	err = db.Where("question_id = ?", id).Order("sorting asc").Find(&data).Error
+	err = db.Raw("SELECT question_id FROM quiz_question_choices WHERE question_id = ?", ID).Order("sorting asc").Scan(&data).Error
 	if err != nil {
 		log.Println("Failed to fetch Option", err)
 		return data, err
@@ -95,7 +95,7 @@ func GetQuestionType(questionImage string) (status bool) {
 	return true
 }
 
-func GetChoiceType(choiceImage string) string {
+func GetChoiceTypeQuiz(choiceImage string) string {
 	if choiceImage == "" {
 		return "text"
 	}
@@ -131,7 +131,7 @@ func (uc *UserAnswer) AddQuiz() error {
 	}
 	// Check if the user has already polled
 	var existingVote UserAnswer
-	err = db.Where("user_id = ?, quiz_id = ?", uc.UserID, uc.QuizID).First(&existingVote).Error
+	err = db.Raw("SELECT user_id, quiz_id FROM user_answers WHERE user_id = ?, quiz_id = ?", uc.UserID, uc.QuizID).Scan(&existingVote).Error
 	if err == nil {
 		return errors.New("user has already polled")
 	}
@@ -196,7 +196,7 @@ func (q *Quiz) GetQuizPosition() (int, error) {
 
 	// Fetch quiz questions with their choices
 	var questions []QuizQuestion
-	err = db.Raw("SELECT quiz_id FROM quiz_question WHERE quiz_id = ?", q.ID).First(&questions).Error
+	err = db.Raw("SELECT quiz_id FROM quiz_question WHERE quiz_id = ?", q.ID).Scan(&questions).Error
 	if err != nil {
 		return 0, err
 	}
@@ -204,7 +204,7 @@ func (q *Quiz) GetQuizPosition() (int, error) {
 	currentQuestion := 1
 	for _, question := range questions {
 		var userAnswer UserAnswer
-		err = db.Where("user_id = ? AND question_id = ?", q.ID, question.ID).First(&userAnswer).Error
+		err = db.Raw("SELECT user_id, question_id FROM user_answers WHERE user_id = ? AND question_id = ?", q.ID, question.ID).Scan(&userAnswer).Error
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return 0, err
 		}

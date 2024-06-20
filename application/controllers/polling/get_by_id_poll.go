@@ -107,6 +107,15 @@ func ByID(e echo.Context) error {
     }
 
     err = polling.GetByID(polling.ID)
+
+    //Get choice type
+    choiceType := models.GetChoiceType(pc.Choice_image)
+    if err!= nil {
+        return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil tipe pilihan")
+    }
+
+
+    //Get meta data 
     metaData := database.Meta()
 
     message := "Success"
@@ -121,7 +130,7 @@ func ByID(e echo.Context) error {
         Title:        polling.Title,
         Question:     polling.Question_text,
         Option: map[string]interface{}{
-            "type": pc.GetChoiceType(pc.Choice_image),
+            "type": choiceType,
             "data": formattedChoices, 
         },
         Banner: map[string]interface{}{

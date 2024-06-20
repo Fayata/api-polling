@@ -118,9 +118,9 @@ func (p *Poll) Delete(id int) error {
 func (p *Poll) GetByID(id int) (err error) {
 	db, err := database.InitDB().DbPolling()
 	if err != nil {
-		return db.Find(p, id).Error
+		return db.First(p, id).Error
 	}
-	return db.Find(p, id).Error
+	return db.First(p, id).Error
 }
 
 func (up *Poll) GetAll() ([]Poll, error) {
@@ -159,7 +159,7 @@ func IsEndedPoll() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if poll.End_date.After(time.Now()) {
+	if poll.End_date.Before(time.Now()) {
 		return true, nil
 	}
 	return false, nil
@@ -205,11 +205,33 @@ func (p *Poll) GetBannerType() string {
 	return "none"
 }
 
-func (pc *Poll_Choices) GetChoiceType(choiceImage string) string {
-	if choiceImage != "" {
-		return "image"
-	}
-	return "text"
+// func GetChoiceType(Choice_image string) string {
+// 	if Choice_image != "" {
+// 		return "image"
+// 	}
+// 	return "text"
+// }
+
+func GetChoiceType(choiceImage string) string {
+    db, err := database.InitDB().DbQuiz()
+    if err != nil {
+        // Handle error jika koneksi database gagal
+        log.Println("Database error:", err)
+        return "text" 
+    }
+
+    var count int
+    err = db.Raw("SELECT COUNT(*) FROM quiz_question_choices WHERE choice_image = ?", choiceImage).Scan(&count).Error
+    if err != nil {
+        log.Println("Query error:", err)
+        return "text" 
+    }
+
+    if count > 0 {
+        return "image"
+    } else {
+        return "text"
+    }
 }
 
 // Fungsi hasil polling berdasarkan ID polling
