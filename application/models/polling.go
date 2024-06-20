@@ -155,7 +155,7 @@ func IsEndedPoll() (bool, error) {
 		return false, err
 	}
 	var poll Poll
-	err = db.Raw("SELECT id FROM poll WHERE id = ?", poll.ID).Scan(&poll).Error
+	err = db.Raw("SELECT end_date FROM poll WHERE id = ?", poll.ID).Scan(&poll).Error
 	if err != nil {
 		return false, err
 	}
@@ -213,25 +213,25 @@ func (p *Poll) GetBannerType() string {
 // }
 
 func GetChoiceType(choiceImage string) string {
-    db, err := database.InitDB().DbQuiz()
-    if err != nil {
-        // Handle error jika koneksi database gagal
-        log.Println("Database error:", err)
-        return "text" 
-    }
+	db, err := database.InitDB().DbQuiz()
+	if err != nil {
+		// Handle error jika koneksi database gagal
+		log.Println("Database error:", err)
+		return "text"
+	}
 
-    var count int
-    err = db.Raw("SELECT COUNT(*) FROM quiz_question_choices WHERE choice_image = ?", choiceImage).Scan(&count).Error
-    if err != nil {
-        log.Println("Query error:", err)
-        return "text" 
-    }
+	var count int
+	err = db.Raw("SELECT COUNT(*) FROM quiz_question_choices WHERE choice_image = ?", choiceImage).Scan(&count).Error
+	if err != nil {
+		log.Println("Query error:", err)
+		return "text"
+	}
 
-    if count > 0 {
-        return "image"
-    } else {
-        return "text"
-    }
+	if count > 0 {
+		return "image"
+	} else {
+		return "text"
+	}
 }
 
 // Fungsi hasil polling berdasarkan ID polling
@@ -287,7 +287,7 @@ func (uc *User_Answer) AddPoll() error {
 	}
 	// Check if the user has already polled
 	var existingVote User_Answer
-	err = db.Where("user_id = ? AND poll_id = ?", uc.User_Id, uc.Poll_Id).First(&existingVote).Error
+	err = db.Raw("SELECT user_id FROM user_answer WHERE user_id = ? AND poll_id = ?", uc.User_Id, uc.Poll_Id).Scan(&existingVote).Error
 	if err == nil {
 		return errors.New("user has already polled")
 	}
