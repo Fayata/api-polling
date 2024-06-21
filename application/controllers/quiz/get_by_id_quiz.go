@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/labstack/echo"
 )
@@ -90,7 +89,7 @@ func GetQuizByID(e echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
 
-	isEnded := quiz.EndDate.Before(time.Now())
+	isEnded, err := models.IsEnded() 
 
 	//  Get meta data
 	metaData := database.Meta()

@@ -156,7 +156,7 @@ func IsEndedPoll() (status bool, err error) {
 		return false, err
 	}
 
-	err = db.Raw("SELECT * FROM poll WHERE id = ?", poll.ID).Scan(&poll).Error
+	err = db.Raw("SELECT end_date FROM poll WHERE id = ?", poll.ID).Scan(&poll).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
