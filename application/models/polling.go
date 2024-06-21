@@ -7,7 +7,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/labstack/echo"
 	"gorm.io/gorm"
 )
 
@@ -134,21 +133,36 @@ func (up *Poll) GetAll() ([]Poll, error) {
 }
 
 // Fungsi untuk memeriksa apakah polling sudah disubmit dan ended
-func (p *Poll) CheckPollStatus(e echo.Context, userId int) (bool, bool, error) {
-	var userChoice User_Answer
-	DB, err := database.InitDB().DbPolling()
+func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
+	var userAnswer User_Answer
+	db, err := database.InitDB().DbPolling()
 	if err != nil {
-		return false, false, err
+		return false, err
 	}
-	err = DB.Where("user_id = ? AND poll_id = ?", userId, p.ID).First(&userChoice).Error
+	err = db.Where("user_id = ? AND poll_id = ?", User_Id, Poll_Id).First(&userAnswer).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return false, false, err
+		return false, err
+	}
+	if err == gorm.ErrRecordNotFound {
+		return false, nil
+	}
+	return true, nil
+}
+func IsEndedPoll() (status bool, err error) {
+	var poll Poll
+	db, err := database.InitDB().DbPolling()
+	if err != nil {
+		return false, err
 	}
 
-	isSubmitted := err == nil
-	isEnded := false
-
-	return isSubmitted, isEnded, nil
+	err = db.Raw("SELECT * FROM poll WHERE id = ?", poll.ID).Scan(&poll).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return false, err
+	}
+	if poll.End_date.After(time.Now()) {
+		return true, nil
+	}
+	return false, nil
 }
 
 // Fungsi untuk mendapatkan persentase vote pada pilihan
@@ -199,10 +213,11 @@ func GetPollingResultsByID(poll_id uint) ([]map[string]interface{}, error) {
 	}
 	// Ambil semua pilihan untuk pollID tertentu
 	var pollChoices []Poll_Choices
-	if err = db.Where("poll_id = ?", poll_id).Find(&pollChoices).Error; err != nil {
+	if err = db.Raw("SELECT poll_id FROM poll_choices WHERE poll_id = ?", poll_id).Scan(&pollChoices).Error; err != nil {
 		log.Println("Failed to fetch poll choices:", err)
 		return nil, err
 	}
+
 
 	// Ambil jumlah vote untuk setiap pilihan
 	choiceVotes := make(map[int]int)

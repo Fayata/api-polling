@@ -20,17 +20,17 @@ func ByID(e echo.Context) error {
 	// Mengambil semua data yang diperlukan
 	var polling models.Poll
 	polling.ID = id
-	if err := db.Find(&polling, polling).Error; err != nil {
+	if err := db.First(&polling, polling).Error; err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Polling tidak ditemukan")
 	}
 
 	var pollChoices []models.Poll_Choices
-	if err := db.Where("poll_id = ?", id).Find(&pollChoices).Error; err != nil {
+	if err := db.Raw("SELECT * FROM poll_choices WHERE poll_id = ?", id).Scan(&pollChoices).Error; err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil pilihan polling")
 	}
 
 	var pollResults []models.Poll_Result
-	if err := db.Where("poll_id = ?", id).Find(&pollResults).Error; err != nil {
+	if err := db.Raw("SELECT poll_id FROM poll_result WHERE poll_id = ?", id).Scan(&pollResults).Error; err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil hasil polling")
 	}
 
@@ -39,16 +39,21 @@ func ByID(e echo.Context) error {
 	if userIDInterface != nil {
 		userID, ok := userIDInterface.(int)
 		if ok {
-			if err := db.Where("user_id = ? AND poll_id = ?", userID, id).Find(&userAnswers).Error; err != nil {
+			if err := db.Raw("SELECT user_id, poll_id FROM user_answer WHERE user_id = ? AND poll_id = ?", userID, id).Scan(&userAnswers).Error; err != nil {
 				return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil jawaban pengguna")
 			}
 		}
 	}
 
-	// Check if poll is submitted and ended (sesuaikan logika ini)
-	isSubmitted, isEnded, err := polling.CheckPollStatus(e, id)
+	// Check if poll is submitted and ended
+	isSubmitted, err := models.IsSubmittedPoll(polling.ID, id)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal memeriksa status polling")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error checking submission status")
+	}
+
+	isEnded, err := models.IsEndedPoll()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error checking poll end status")
 	}
 
 	// Format pilihan (choices) untuk respons
