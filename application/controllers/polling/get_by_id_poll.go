@@ -76,7 +76,7 @@ func ByID(e echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error checking submission status")
 	}
 
-	isEnded, err := models.IsEndedPoll()
+	isEnded, err := models.IsEndedPoll(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error checking poll end status")
 	}

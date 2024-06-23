@@ -52,7 +52,7 @@ func (m *UserAnswer) TableName() string {
 	return "user_answers"
 }
 
-//Function for get all questions by quiz id
+// Function for get all questions by quiz id
 func GetQuestionByQuizId(id int) (data []QuizQuestion, err error) {
 	db, err := database.InitDB().DbQuiz()
 	if err != nil {
@@ -66,7 +66,7 @@ func GetQuestionByQuizId(id int) (data []QuizQuestion, err error) {
 	return data, err
 }
 
-//Function for get all choices by question id
+// Function for get all choices by question id
 func GetChoiceByQuestionId(ID int) (data []QuizQuestionChoice, err error) {
 	db, err := database.InitDB().DbQuiz()
 	if err != nil {
@@ -80,7 +80,7 @@ func GetChoiceByQuestionId(ID int) (data []QuizQuestionChoice, err error) {
 	return data, err
 }
 
-//Function for get all quiz
+// Function for get all quiz
 func (q *Quiz) GetAll() ([]Quiz, error) {
 	var quizzes []Quiz
 	db, err := database.InitDB().DbQuiz()
@@ -91,7 +91,7 @@ func (q *Quiz) GetAll() ([]Quiz, error) {
 	return quizzes, err
 }
 
-//Function for get question type quiz by question image
+// Function for get question type quiz by question image
 func GetQuestionType(questionImage string) (status bool) {
 	if questionImage == "" {
 		return false
@@ -99,7 +99,7 @@ func GetQuestionType(questionImage string) (status bool) {
 	return true
 }
 
-//Function for get choice type quiz by choice image
+// Function for get choice type quiz by choice image
 func GetChoiceTypeQuiz(choiceImage string) string {
 	if choiceImage == "" {
 		return "text"
@@ -107,7 +107,7 @@ func GetChoiceTypeQuiz(choiceImage string) string {
 	return "image"
 }
 
-//Function for add Quiz
+// Function for add Quiz
 func AddQuiz(user_id int, quiz_id int, question_id int, choice_id uint) error {
 
 	var userAnswer = UserAnswer{
@@ -150,7 +150,7 @@ func (uc *UserAnswer) AddQuiz() error {
 	return nil
 }
 
-//Function for check if user submitted the quiz
+// Function for check if user submitted the quiz
 func IsSubmitted(user_id int, quiz_id int) (status bool, err error) {
 	var userAnswer UserAnswer
 	db, err := database.InitDB().DbQuiz()
@@ -167,7 +167,7 @@ func IsSubmitted(user_id int, quiz_id int) (status bool, err error) {
 	return true, nil
 }
 
-//Function for check if quiz is ended(Unfinished)
+// Function for check if quiz is ended(Unfinished)
 func IsEnded() (bool, error) {
 	db, err := database.InitDB().DbQuiz()
 	if err != nil {
@@ -175,16 +175,16 @@ func IsEnded() (bool, error) {
 	}
 	var quiz Quiz
 	err = db.Where("id = ?", quiz.ID).First(&quiz).Error
-	if err != nil && err!= gorm.ErrRecordNotFound  {
+	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
-	if quiz.EndDate.After(time.Now()) {
+	if quiz.EndDate.After(time.Now()) || quiz.StartDate.After(time.Now()) {
 		return true, nil
 	}
 	return false, nil
 }
 
-//Function for get total quizzes
+// Function for get total quizzes
 func (q *Quiz) GetTotalQuizzes() (int64, error) {
 	db, err := database.InitDB().DbQuiz()
 	if err != nil {
