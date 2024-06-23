@@ -46,11 +46,16 @@ func GetQuizByID(e echo.Context) error {
 	userID := e.Get("user_id").(int)
 
 	// Check if quiz is submitted and ended
-	isSubmitted, isEnded, err := quiz.CheckQuizStatus(e, uint(userID))
+	isSubmitted, err := models.IsEndedQuiz(userID)
 	if err != nil {
 		log.Println("Failed to check quiz status:", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
+	isEnded, err := models.IsEndedQuiz(userID)
+	if err!= nil {
+        log.Println("Failed to check quiz status:", err)
+        return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+    }
 
 	// Fetch quiz questions with their Quiz
 	questions, err := models.GetQuestionByQuizId(id)

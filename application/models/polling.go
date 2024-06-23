@@ -148,21 +148,20 @@ func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
 	}
 	return true, nil
 }
-func IsEndedPoll() (status bool, err error) {
-	var poll Poll
-	db, err := database.InitDB().DbPolling()
-	if err != nil {
-		return false, err
-	}
-
-	err = db.Raw("SELECT * FROM poll WHERE id = ?", poll.ID).Scan(&poll).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return false, err
-	}
-	if poll.End_date.After(time.Now()) {
-		return true, nil
-	}
-	return false, nil
+func IsEndedPoll(Poll_Id int) (status bool, err error) {
+    var poll Poll
+    db, err := database.InitDB().DbPolling()
+    if err!= nil {
+        return false, err
+    }
+    err = db.Where("id =?", Poll_Id).First(&poll).Error
+    if err!= nil {
+        return false, err
+    }
+    if poll.End_date.Before(time.Now()) || poll.Start_date.After(time.Now()) {
+        return true, nil
+    }
+    return false, nil
 }
 
 // Fungsi untuk mendapatkan persentase vote pada pilihan

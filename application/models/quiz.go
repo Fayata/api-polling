@@ -6,8 +6,6 @@ import (
 	"log"
 
 	"time"
-
-	"github.com/labstack/echo"
 	"gorm.io/gorm"
 )
 
@@ -174,21 +172,36 @@ func (q *Quiz) GetTotalQuizzes() (int64, error) {
 	return total, nil
 }
 
-func (q *Quiz) CheckQuizStatus(e echo.Context, userID uint) (bool, bool, error) {
-	var userAnswer UserAnswer
+
+func IsSubmittedQuiz(User_Id int, QuizID int) (status bool, err error) {
+	var userAnswers UserAnswer
 	db, err := database.InitDB().DbQuiz()
 	if err != nil {
-		return false, false, err
+		return false, err
 	}
-	err = db.Where("user_id = ? AND quiz_id = ?", userID, q.ID).First(&userAnswer).Error
+	err = db.Where("user_id = ? AND quiz_id = ?", User_Id, QuizID).First(&userAnswers).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
-		return false, false, err
+		return false, err
 	}
-
-	isSubmitted := err == nil
-	isEnded := false
-
-	return isSubmitted, isEnded, nil
+	if err == gorm.ErrRecordNotFound {
+		return false, nil
+	}
+	return true, nil
+}
+func IsEndedQuiz(Poll_Id int) (status bool, err error) {
+    var quiz Quiz
+    db, err := database.InitDB().DbPolling()
+    if err!= nil {
+        return false, err
+    }
+    err = db.Where("id =?", Poll_Id).First(&quiz).Error
+    if err!= nil {
+        return false, err
+    }
+    if quiz.EndDate.Before(time.Now()) || quiz.StartDate.After(time.Now()) {
+        return true, nil
+    }
+    return false, nil
 }
 
 // Fungsi untuk mendapatkan posisi kuis dan total kuis
