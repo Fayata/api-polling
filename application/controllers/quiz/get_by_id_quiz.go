@@ -44,6 +44,8 @@ func GetQuizByID(e echo.Context) error {
         return echo.NewHTTPError(http.StatusNotFound, "Quiz not found")
     }
 
+	userID := e.Get("user_id").(int)
+
     // Fetch quiz questions
     var questions []models.QuizQuestion
     err = db.Raw("SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY number ASC", id).Scan(&questions).Error
@@ -83,13 +85,17 @@ func GetQuizByID(e echo.Context) error {
 
         questionResults = append(questionResults, questionResult)
     }
-	isSubmitted, err := models.IsSubmitted(quiz.ID, id)
+	isSubmitted, err := models.IsSubmitted(userID, id)
 	if err != nil {
 		log.Println("Error checking submission status:", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
 
-	isEnded, err := models.IsEnded() 
+	isEnded, err := models.IsEnded(id) 
+	if err!= nil {
+        log.Println("Error checking end status:", err)
+        return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+    }
 
 	//  Get meta data
 	metaData := database.Meta()

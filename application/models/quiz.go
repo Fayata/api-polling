@@ -168,12 +168,13 @@ func IsSubmitted(user_id int, quiz_id int) (status bool, err error) {
 }
 
 // Function for check if quiz is ended(Unfinished)
-func IsEnded() (bool, error) {
+func IsEnded(ID int) (bool, error) {
+	var quiz Quiz
 	db, err := database.InitDB().DbQuiz()
 	if err != nil {
 		return false, err
 	}
-	var quiz Quiz
+	
 	err = db.Where("id = ?", quiz.ID).First(&quiz).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err

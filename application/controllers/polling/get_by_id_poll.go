@@ -35,13 +35,19 @@ func ByID(e echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Poll_id tidak valid")
 	}
 
+	var polling models.Poll
 	db, err := database.InitDB().DbPolling()
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal membuat koneksi ke database")
+		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
 	}
+	err = db.First(&polling, id).Error
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Quiz not found")
+	}
+	userID := e.Get("user_id").(int)
 
 	// Fetch the poll data
-	var polling models.Poll
+
 	polling.ID = id
 	if err := db.First(&polling, polling).Error; err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Polling tidak ditemukan")
@@ -59,19 +65,19 @@ func ByID(e echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil hasil polling")
 	}
 
-	userIDInterface := e.Get("user_id")
+	// userIDInterface := e.Get("user_id")
 	var userAnswers []models.User_Answer
-	if userIDInterface != nil {
-		userID, ok := userIDInterface.(int)
-		if ok {
-			if err := db.Raw("SELECT user_id, poll_id FROM user_answer WHERE user_id = ? AND poll_id = ?", userID, id).Scan(&userAnswers).Error; err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil jawaban pengguna")
-			}
-		}
-	}
+	// if userIDInterface != nil {
+	// 	userID, ok := userIDInterface.(int)
+	// 	if ok {
+	// 		if err := db.Raw("SELECT user_id, poll_id FROM user_answer WHERE user_id = ? AND poll_id = ?", userID, id).Scan(&userAnswers).Error; err != nil {
+	// 			return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil jawaban pengguna")
+	// 		}
+	// 	}
+	// }
 
 	// Check if poll is submitted and ended
-	isSubmitted, err := models.IsSubmittedPoll(polling.ID, id)
+	isSubmitted, err := models.IsSubmittedPoll(userID, id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error checking submission status")
 	}
