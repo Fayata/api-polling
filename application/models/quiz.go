@@ -93,6 +93,14 @@ func (q *Quiz) GetAll() ([]Quiz, error) {
 
 // Function for get question type quiz by question image
 func GetQuestionType(questionImage string) (status bool) {
+	db, err := database.GetDB("quiz")
+	if err != nil {
+		// Handle error jika koneksi database gagal
+		log.Println("Database error:", err)
+		return true
+	}
+	var count int
+	err = db.Raw("SELECT COUNT(*) FROM QuizQuestionChoice WHERE choice_image = ?", questionImage).Scan(&count).Error
 	if questionImage == "" {
 		return false
 	}
@@ -101,6 +109,14 @@ func GetQuestionType(questionImage string) (status bool) {
 
 // Function for get choice type quiz by choice image
 func GetChoiceTypeQuiz(choiceImage string) string {
+	db, err := database.GetDB("quiz")
+	if err != nil {
+		// Handle error jika koneksi database gagal
+		log.Println("Database error:", err)
+		return "text"
+	}
+	var count int
+	err = db.Raw("SELECT COUNT(*) FROM QuizQuestionChoice WHERE choice_image = ?", choiceImage).Scan(&count).Error
 	if choiceImage == "" {
 		return "text"
 	}
@@ -174,7 +190,7 @@ func IsEnded(ID int) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	
+
 	err = db.Where("id = ?", quiz.ID).First(&quiz).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
