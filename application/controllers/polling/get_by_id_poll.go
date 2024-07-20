@@ -36,7 +36,7 @@ func ByID(e echo.Context) error {
 	}
 
 	var polling models.Poll
-	db, err := database.InitDB().DbPolling()
+	db, err := database.GetDB("polling")
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
 	}

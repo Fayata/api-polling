@@ -29,7 +29,7 @@ func main() {
 
 	// AutoMigrate models
 	if isAutoMigrate {
-		db, err:= database.InitDB().DbPolling()
+		db, err := database.GetDB("polling")
 		err = db.AutoMigrate(
 			// &models.User{},
 			&models.Poll{},
@@ -43,7 +43,7 @@ func main() {
 		if err != nil {
 			log.Fatal("Error migrating database: Polling", err)
 		}
-		dbq, err:= database.InitDB().DbQuiz()
+		dbq, err := database.GetDB("quiz")
 		err = dbq.AutoMigrate(
 			&models.Quiz{},
 			&models.QuizQuestion{},

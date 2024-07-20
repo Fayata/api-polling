@@ -35,7 +35,7 @@ func GetQuizByID(e echo.Context) error {
     var quiz models.Quiz
 
     // Get quiz by ID
-    db, err := database.InitDB().DbQuiz()
+    db, err := database.GetDB("quiz")
     if err != nil {
         return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
     }

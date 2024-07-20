@@ -57,7 +57,7 @@ func (m *User_Answer) TableName() string {
 ///////////////////CMS////////////////////
 
 func (p *Poll) Create() error {
-	db, err := database.InitDB().DbPolling()
+	db, err := database.GetDB("polling")
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (p *Poll) Create() error {
 }
 
 func (p *Poll) Update(id int) error {
-	db, err := database.InitDB().DbPolling()
+	db, err := database.GetDB("polling")
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (p *Poll) Update(id int) error {
 }
 
 func (p *Poll) Delete(id int) error {
-	db, err := database.InitDB().DbPolling()
+	db, err := database.GetDB("polling")
 	if err != nil {
 		return err
 	}
@@ -116,7 +116,7 @@ func (p *Poll) Delete(id int) error {
 ////////////////////USERS///////////////////
 
 func (p *Poll) GetByID(id int) (err error) {
-	db, err := database.InitDB().DbPolling()
+	db, err := database.GetDB("polling")
 	if err != nil {
 		return db.First(p, id).Error
 	}
@@ -125,7 +125,7 @@ func (p *Poll) GetByID(id int) (err error) {
 
 func (up *Poll) GetAll() ([]Poll, error) {
 	var polls []Poll
-	db, err := database.InitDB().DbPolling()
+	db, err := database.GetDB("polling")
 	if err != nil {
 		return polls, err
 	}
@@ -136,7 +136,7 @@ func (up *Poll) GetAll() ([]Poll, error) {
 // Fungsi untuk memeriksa apakah polling sudah disubmit dan ended
 func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
 	var userAnswer User_Answer
-	db, err := database.InitDB().DbPolling()
+	db, err := database.GetDB("polling")
 	if err != nil {
 		return false, err
 	}
@@ -151,7 +151,7 @@ func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
 }
 func IsEndedPoll(Poll_Id int) (status bool, err error) {
     var poll Poll
-    db, err := database.InitDB().DbPolling()
+    db, err := database.GetDB("polling")
     if err!= nil {
         return false, err
     }
@@ -167,7 +167,7 @@ func IsEndedPoll(Poll_Id int) (status bool, err error) {
 
 // Fungsi untuk mendapatkan persentase vote pada pilihan
 func (pc *Poll_Choices) GetVotePercentage(poll_id int) (float32, error) {
-	db, err := database.InitDB().DbPolling()
+	db, err := database.GetDB("polling")
 	if err != nil {
 		return 0, err
 	}
@@ -210,7 +210,7 @@ func (p *Poll) GetBannerType() string {
 
 //Function for choice_type polling
 func GetChoiceType(choiceImage string) string {
-	db, err := database.InitDB().DbQuiz()
+	db, err := database.GetDB("polling")
 	if err != nil {
 		// Handle error jika koneksi database gagal
 		log.Println("Database error:", err)
@@ -218,7 +218,7 @@ func GetChoiceType(choiceImage string) string {
 	}
 
 	var count int
-	err = db.Raw("SELECT COUNT(*) FROM quiz_question_choices WHERE choice_image = ?", choiceImage).Scan(&count).Error
+	err = db.Raw("SELECT COUNT(*) FROM poll WHERE choice_image = ?", choiceImage).Scan(&count).Error
 	if err != nil {
 		log.Println("Query error:", err)
 		return "text"
@@ -233,7 +233,7 @@ func GetChoiceType(choiceImage string) string {
 
 // Fungsi hasil polling berdasarkan ID polling
 func GetPollingResultsByID(poll_id uint) ([]map[string]interface{}, error) {
-	db, err := database.InitDB().DbPolling()
+	db, err := database.GetDB("polling")
 	if err != nil {
 		return nil, err
 	}
@@ -281,7 +281,7 @@ func GetPollingResultsByID(poll_id uint) ([]map[string]interface{}, error) {
 
 //Function for adding a new poll answer 
 func (uc *User_Answer) AddPoll() error {
-	db, err := database.InitDB().DbPolling()
+	db, err := database.GetDB("polling")
 	if err != nil {
 		return err
 	}

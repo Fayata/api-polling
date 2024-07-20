@@ -54,7 +54,7 @@ func (m *UserAnswer) TableName() string {
 
 // Function for get all questions by quiz id
 func GetQuestionByQuizId(id int) (data []QuizQuestion, err error) {
-	db, err := database.InitDB().DbQuiz()
+	db, err := database.GetDB("quiz")
 	if err != nil {
 		return data, err
 	}
@@ -68,7 +68,7 @@ func GetQuestionByQuizId(id int) (data []QuizQuestion, err error) {
 
 // Function for get all choices by question id
 func GetChoiceByQuestionId(ID int) (data []QuizQuestionChoice, err error) {
-	db, err := database.InitDB().DbQuiz()
+	db, err := database.GetDB("quiz")
 	if err != nil {
 		return data, err
 	}
@@ -83,7 +83,7 @@ func GetChoiceByQuestionId(ID int) (data []QuizQuestionChoice, err error) {
 // Function for get all quiz
 func (q *Quiz) GetAll() ([]Quiz, error) {
 	var quizzes []Quiz
-	db, err := database.InitDB().DbQuiz()
+	db, err := database.GetDB("quiz")
 	if err != nil {
 		return quizzes, err
 	}
@@ -117,7 +117,7 @@ func AddQuiz(user_id int, quiz_id int, question_id int, choice_id uint) error {
 		ChoiceID:   choice_id,
 	}
 
-	db, err := database.InitDB().DbQuiz()
+	db, err := database.GetDB("quiz")
 
 	if err != nil {
 		return err
@@ -131,7 +131,7 @@ func AddQuiz(user_id int, quiz_id int, question_id int, choice_id uint) error {
 }
 
 func (uc *UserAnswer) AddQuiz() error {
-	db, err := database.InitDB().DbPolling()
+	db, err := database.GetDB("quiz")
 	if err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func (uc *UserAnswer) AddQuiz() error {
 // Function for check if user submitted the quiz
 func IsSubmitted(user_id int, quiz_id int) (status bool, err error) {
 	var userAnswer UserAnswer
-	db, err := database.InitDB().DbQuiz()
+	db, err := database.GetDB("quiz")
 	if err != nil {
 		return false, err
 	}
@@ -170,7 +170,7 @@ func IsSubmitted(user_id int, quiz_id int) (status bool, err error) {
 // Function for check if quiz is ended(Unfinished)
 func IsEnded(ID int) (bool, error) {
 	var quiz Quiz
-	db, err := database.InitDB().DbQuiz()
+	db, err := database.GetDB("quiz")
 	if err != nil {
 		return false, err
 	}
@@ -187,7 +187,7 @@ func IsEnded(ID int) (bool, error) {
 
 // Function for get total quizzes
 func (q *Quiz) GetTotalQuizzes() (int64, error) {
-	db, err := database.InitDB().DbQuiz()
+	db, err := database.GetDB("quiz")
 	if err != nil {
 		return 0, err
 	}
@@ -200,7 +200,7 @@ func (q *Quiz) GetTotalQuizzes() (int64, error) {
 
 // Fungsi untuk mendapatkan posisi kuis dan total kuis
 func (q *Quiz) GetQuizPosition() (int, error) {
-	db, err := database.InitDB().DbQuiz()
+	db, err := database.GetDB("quiz")
 	if err != nil {
 		return 0, err
 	}
