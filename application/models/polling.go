@@ -150,19 +150,19 @@ func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
 	return true, nil
 }
 func IsEndedPoll(Poll_Id int) (status bool, err error) {
-    var poll Poll
-    db, err := database.GetDB("polling")
-    if err!= nil {
-        return false, err
-    }
-    err = db.Where("id =?", Poll_Id).First(&poll).Error
-    if err!= nil {
-        return false, err
-    }
-    if poll.End_date.Before(time.Now()) || poll.Start_date.After(time.Now()) {
-        return true, nil
-    }
-    return false, nil
+	var poll Poll
+	db, err := database.GetDB("polling")
+	if err != nil {
+		return false, err
+	}
+	err = db.Where("id =?", Poll_Id).First(&poll).Error
+	if err != nil {
+		return false, err
+	}
+	if poll.End_date.Before(time.Now()) || poll.Start_date.After(time.Now()) {
+		return true, nil
+	}
+	return false, nil
 }
 
 // Fungsi untuk mendapatkan persentase vote pada pilihan
@@ -192,8 +192,7 @@ func (pc *Poll_Choices) GetVotePercentage(poll_id int) (float32, error) {
 	return percentage, nil
 }
 
-
-//Function for banner_type polling
+// Function for banner_type polling
 func (p *Poll) GetBannerType() string {
 	if p.Options_type == "list" {
 		if p.Question_image != "" {
@@ -207,9 +206,8 @@ func (p *Poll) GetBannerType() string {
 	return "none"
 }
 
-
-//Function for choice_type polling
-func GetChoiceType(choiceImage string) string {
+// Function for choice_type polling
+func GetChoiceType(optionType string) string {
 	db, err := database.GetDB("polling")
 	if err != nil {
 		// Handle error jika koneksi database gagal
@@ -218,15 +216,13 @@ func GetChoiceType(choiceImage string) string {
 	}
 
 	var count int
-	err = db.Raw("SELECT COUNT(*) FROM poll WHERE choice_image = ?", choiceImage).Scan(&count).Error
-	if err != nil {
-		log.Println("Query error:", err)
-		return "text"
-	}
-
-	if count > 0 {
+	err = db.Raw("SELECT COUNT(*) FROM poll WHERE option_type = ?", optionType).Scan(&count).Error
+	if optionType == "grid" {
 		return "image"
+	} else if optionType == "list" {
+		return "text"
 	} else {
+		log.Printf("Unexpected option type: %s", optionType)
 		return "text"
 	}
 }
@@ -243,7 +239,6 @@ func GetPollingResultsByID(poll_id uint) ([]map[string]interface{}, error) {
 		log.Println("Failed to fetch poll choices:", err)
 		return nil, err
 	}
-
 
 	// Ambil jumlah vote untuk setiap pilihan
 	choiceVotes := make(map[int]int)
@@ -278,8 +273,7 @@ func GetPollingResultsByID(poll_id uint) ([]map[string]interface{}, error) {
 	return formattedResults, nil
 }
 
-
-//Function for adding a new poll answer 
+// Function for adding a new poll answer
 func (uc *User_Answer) AddPoll() error {
 	db, err := database.GetDB("polling")
 	if err != nil {
