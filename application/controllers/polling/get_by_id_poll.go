@@ -56,13 +56,11 @@ func ByID(e echo.Context) error {
 	}
 	userID := e.Get("user_id").(int)
 
-	// Fetch the poll data 
-	// polling.ID = id
-	// if err := db.First(&polling, polling).Error; err != nil {
-	// 	return echo.NewHTTPError(http.StatusNotFound, "Polling tidak ditemukan")
-	// }
-
-	var pc models.Poll_Choices
+	//Fetch the poll data
+	polling.ID = id
+	if err := db.First(&polling, polling).Error; err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Polling tidak ditemukan")
+	}
 
 	var pollChoices []models.Poll_Choices
 	if err := db.Raw("SELECT * FROM poll_choices WHERE poll_id = ?", id).Scan(&pollChoices).Error; err != nil {
@@ -76,12 +74,9 @@ func ByID(e echo.Context) error {
 
 	// userIDInterface := e.Get("user_id")
 	var userAnswers []models.User_Answer
-	// if userIDInterface != nil {
-	// 	userID, ok := userIDInterface.(int)
-	// 	if ok {
-	// 		if err := dbq.Raw("SELECT user_id, poll_id FROM user_answer WHERE user_id = ? AND poll_id = ?", userID, id).Scan(&userAnswers).Error; err != nil {
-	// 			return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil jawaban pengguna")
-	// 		}
+	if err := db.Raw("SELECT user_id, poll_id FROM user_answer WHERE user_id = ? AND poll_id = ?", userID, id).Scan(&userAnswers).Error; err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil jawaban pengguna")
+	}
 	// 	}
 	// }
 
@@ -119,15 +114,15 @@ func ByID(e echo.Context) error {
 			IsSelected: isSelected,
 		}
 	}
-
 	err = polling.GetByID(polling.ID)
 
 	//Get choice type
-	choiceType := models.GetChoiceType(pc.Choice_image)
+	choiceType := models.GetChoiceType(polling.Options_type)
+
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil tipe pilihan")
 	}
-
+	bannerType := models.GetBannerType(polling.Question_image)
 	//Get meta data
 	metaData := database.Meta()
 
@@ -147,7 +142,7 @@ func ByID(e echo.Context) error {
 			"data": formattedChoices,
 		},
 		Banner: map[string]interface{}{
-			"type": polling.GetBannerType(),
+			"type": bannerType,
 			"url":  polling.Question_image,
 		},
 		IsSubmitted: isSubmitted,

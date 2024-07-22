@@ -53,6 +53,7 @@ type User_Answer struct {
 func (m *User_Answer) TableName() string {
 	return "user_answer"
 }
+
 var db *gorm.DB
 
 func init() {
@@ -64,8 +65,8 @@ func init() {
 ///////////////////CMS////////////////////
 
 // func (p *Poll) Create() error {
-	
-// 	var 
+
+// 	var
 // 	// Create polling and its choices in a transaction
 // 	err = db.Transaction(func(tx *gorm.DB) error {
 // 		if err := tx.Create(p).Error; err != nil {
@@ -121,7 +122,7 @@ func init() {
 ////////////////////USERS///////////////////
 
 func (p *Poll) GetByID(id int) (err error) {
-	
+
 	if err != nil {
 		return db.First(p, id).Error
 	}
@@ -151,7 +152,7 @@ func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
 func IsEndedPoll(Poll_Id int) (status bool, err error) {
 	var poll Poll
 
-	err = db.Where("id =?", Poll_Id).First(&poll).Error
+	err = db.Where("id =?", Poll_Id).Find(&poll).Error
 	if err != nil {
 		return false, err
 	}
@@ -186,29 +187,29 @@ func (pc *Poll_Choices) GetVotePercentage(poll_id int) (float32, error) {
 }
 
 // Function for banner_type polling
-func (p *Poll) GetBannerType() string {
-	if p.Options_type == "list" {
-		if p.Question_image != "" {
-			return "question"
-		} else {
-			return "none"
-		}
-	} else if p.Options_type == "grid" {
-		return "image"
+func GetBannerType(questionImages string) string {
+	var p Poll
+	err := db.Raw("SELECT * FROM poll WHERE question_image = ?", questionImages).Scan(&p).Error
+	if err != nil {
+		log.Println("Failed to fetch poll:", err)
+		return "none"
 	}
-	return "none"
+	if p.Question_image != "" {
+		return "question"
+	} else {
+		return "none"
+	}
 }
 
 // Function for choice_type polling
 func GetChoiceType(optionType string) string {
-	
 
 	var count Poll
 	err := db.Raw("SELECT * FROM poll WHERE option_type = ?", optionType).Scan(&count).Error
-	if err!= nil {
-        log.Println("Failed to count poll:", err)
-        return "text"
-    }
+	if err != nil {
+		log.Println("Failed to count poll:", err)
+		return "text"
+	}
 	if optionType == "grid" {
 		return "image"
 	} else if optionType == "list" {
@@ -221,50 +222,51 @@ func GetChoiceType(optionType string) string {
 
 // Fungsi hasil polling berdasarkan ID polling
 func GetPollingResultsByID(poll_id uint) ([]map[string]interface{}, error) {
-	
-	// Ambil semua pilihan untuk pollID tertentu
-	var pollChoices []Poll_Choices
-	if err := db.Raw("SELECT poll_id FROM poll_choices WHERE poll_id = ?", poll_id).Scan(&pollChoices).Error; err != nil {
-		log.Println("Failed to fetch poll choices:", err)
-		return nil, err
-	}
 
-	// Ambil jumlah vote untuk setiap pilihan
-	choiceVotes := make(map[int]int)
-	for _, pc := range pollChoices {
-		voteCount, err := pc.GetVotePercentage(int(poll_id))
-		if err != nil {
-			log.Println("Failed to get vote percentage for choice:", err)
-			return nil, err
-		}
-		choiceVotes[pc.ID] = int(voteCount)
-	}
+    // Ambil semua pilihan untuk pollID tertentu
+    var pollChoices []Poll_Choices
+    err := db.Raw("SELECT * FROM poll_choices WHERE poll_id = ?", poll_id).Scan(&pollChoices).Error // Select all columns
+    if err != nil {
+        log.Println("Failed to fetch poll choices:", err)
+        return nil, err
+    }
 
-	var polling Poll
-	if err := db.First(&polling, poll_id).Error; err != nil {
-		log.Println("Failed to fetch polling:", err)
-		return nil, err
-	}
+    // Ambil jumlah vote untuk setiap pilihan
+    choiceVotes := make(map[int]int)
+    for _, pc := range pollChoices {
+        voteCount, err := pc.GetVotePercentage(int(poll_id))
+        if err != nil {
+            log.Println("Failed to get vote percentage for choice:", err)
+            return nil, err
+        }
+        choiceVotes[pc.ID] = int(voteCount)
+    }
 
-	formattedResults := make([]map[string]interface{}, len(pollChoices))
-	for i, pc := range pollChoices {
-		formattedResults[i] = map[string]interface{}{
-			"poll_choice": map[string]interface{}{
-				"id":           pc.ID,
-				"choice_text":  pc.Choice_text,
-				"choice_image": pc.Choice_image,
-				"title":        polling.Title,
-			},
-			"percentage": choiceVotes[pc.ID],
-		}
-	}
+    var polling Poll
+    if err := db.First(&polling, poll_id).Error; err != nil {
+        log.Println("Failed to fetch polling:", err)
+        return nil, err
+    }
 
-	return formattedResults, nil
+    formattedResults := make([]map[string]interface{}, len(pollChoices))
+    for i, pc := range pollChoices {
+        formattedResults[i] = map[string]interface{}{
+            "poll_choice": map[string]interface{}{  // Add comma after "title"
+                "id":           pc.ID,
+                "choice_text":  pc.Choice_text,
+                "choice_image": pc.Choice_image,
+                "title":        polling.Title,
+            },
+            "percentage": choiceVotes[pc.ID],
+        }
+    }
+
+    return formattedResults, nil
 }
 
 // Function for adding a new poll answer
 func (uc *User_Answer) AddPoll() error {
-	
+
 	// Check if the user has already polled
 	var existingVote User_Answer
 	err := db.Raw("SELECT user_id FROM user_answer WHERE user_id = ? AND poll_id = ?", uc.User_Id, uc.Poll_Id).Scan(&existingVote).Error

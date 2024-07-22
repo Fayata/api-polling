@@ -2,7 +2,7 @@ package models
 
 import (
 	"api-polling/system/database"
-	
+
 	"log"
 
 	"time"
@@ -84,7 +84,6 @@ func GetChoiceByQuestionId(ID int) (data []QuizQuestionChoice, err error) {
 // Function for get all quiz
 func (q *Quiz) GetAll() (quizzes []Quiz, err error) {
 
-
 	err = dbq.Find(&quizzes).Error
 	return quizzes, err
 }
@@ -94,9 +93,9 @@ func GetQuestionType(questionImage string) (status bool) {
 
 	var count QuizQuestion
 	err := dbq.Raw("SELECT * FROM quiz_questions WHERE question_image = ?", questionImage).Scan(&count).Error
-	if err!= nil { 
-        return false
-    }
+	if err != nil {
+		return false
+	}
 	if questionImage == "" {
 		return false
 	}
@@ -108,9 +107,9 @@ func GetChoiceTypeQuiz(choiceImage string) string {
 
 	var count QuizQuestionChoice
 	err := dbq.Raw("SELECT *FROM quiz_question_choices   WHERE choice_image = ?", choiceImage).Scan(&count).Error
-	if err != nil { 
+	if err != nil {
 		return "text"
-    }
+	}
 	if choiceImage == "" {
 		return "text"
 	}
@@ -120,8 +119,14 @@ func GetChoiceTypeQuiz(choiceImage string) string {
 // Function for add Quiz
 func AddQuiz(user_id int, quiz_id int, question_id int, choice_id uint) error {
 
-	var ua UserAnswer
-	if err := dbq.Create(ua).Error; err != nil {
+	var userAnswer = UserAnswer{
+		UserID:     user_id,
+		QuizID:     quiz_id,
+		QuestionID: question_id,
+		ChoiceID:   choice_id,
+	}
+
+	if err := dbq.Create(userAnswer).Error; err != nil {
 		log.Println("Failed to add poll:", err)
 		return err
 	}
@@ -133,11 +138,14 @@ func AddQuiz(user_id int, quiz_id int, question_id int, choice_id uint) error {
 func IsSubmitted(userID int, quizID int) (bool, error) {
 	var ua UserAnswer
 	var count int
-	err := dbq.Raw("SELECT COUNT(*) FROM user_answers WHERE user_id = ? AND quiz_id = ?", ua.UserID, ua.QuizID).Scan(&count).Error
-	if err != nil {
+	err := dbq.Raw("SELECT * FROM user_answers WHERE user_id = ? AND quiz_id = ?", ua.UserID, ua.QuizID).Scan(&count).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
-	return count > 0, nil
+	if err == gorm.ErrRecordNotFound {
+		return false, nil
+	}
+	return true, nil
 }
 
 // Function for check if quiz is ended(Unfinished)
@@ -148,7 +156,7 @@ func IsEnded(ID int) (bool, error) {
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
-	if quiz.EndDate.After(time.Now()) || quiz.StartDate.After(time.Now()) {
+	if quiz.EndDate.Before(time.Now()) || quiz.StartDate.After(time.Now()) {
 		return true, nil
 	}
 	return false, nil
@@ -170,7 +178,6 @@ func IsEnded(ID int) (bool, error) {
 // Fungsi untuk mendapatkan posisi kuis dan total kuis
 // func (q *Quiz) GetQuizPosition() (int, err error) {
 
-	
 // 	err = db.Raw("SELECT quiz_id FROM quiz_question WHERE quiz_id = ?", q.ID).Scan(&questions).Error
 // 	if err != nil {
 // 		return 0, err
