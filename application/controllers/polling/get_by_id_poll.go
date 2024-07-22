@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo"
+	"gorm.io/gorm"
 )
 
 type PollResponse struct {
@@ -29,6 +30,15 @@ type PollChoiceResponse struct {
 	IsSelected bool    `json:"is_selected"`
 }
 
+var db *gorm.DB
+var dbq *gorm.DB
+
+func init() {
+	pollingDB, quizDB := database.InitDB()
+	db = pollingDB.Db
+	dbq = quizDB.Db
+}
+
 func ByID(e echo.Context) error {
 	id, err := strconv.Atoi(e.Param("id"))
 	if err != nil {
@@ -36,22 +46,21 @@ func ByID(e echo.Context) error {
 	}
 
 	var polling models.Poll
-	db, err := database.GetDB("polling")
+
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
 	}
 	err = db.First(&polling, id).Error
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Quiz not found")
+		return echo.NewHTTPError(http.StatusNotFound, "Polling not found")
 	}
 	userID := e.Get("user_id").(int)
 
-	// Fetch the poll data
-
-	polling.ID = id
-	if err := db.First(&polling, polling).Error; err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Polling tidak ditemukan")
-	}
+	// Fetch the poll data 
+	// polling.ID = id
+	// if err := db.First(&polling, polling).Error; err != nil {
+	// 	return echo.NewHTTPError(http.StatusNotFound, "Polling tidak ditemukan")
+	// }
 
 	var pc models.Poll_Choices
 
@@ -70,7 +79,7 @@ func ByID(e echo.Context) error {
 	// if userIDInterface != nil {
 	// 	userID, ok := userIDInterface.(int)
 	// 	if ok {
-	// 		if err := db.Raw("SELECT user_id, poll_id FROM user_answer WHERE user_id = ? AND poll_id = ?", userID, id).Scan(&userAnswers).Error; err != nil {
+	// 		if err := dbq.Raw("SELECT user_id, poll_id FROM user_answer WHERE user_id = ? AND poll_id = ?", userID, id).Scan(&userAnswers).Error; err != nil {
 	// 			return echo.NewHTTPError(http.StatusInternalServerError, "Gagal mengambil jawaban pengguna")
 	// 		}
 	// 	}

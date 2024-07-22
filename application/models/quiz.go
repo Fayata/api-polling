@@ -2,7 +2,7 @@ package models
 
 import (
 	"api-polling/system/database"
-	"errors"
+	
 	"log"
 
 	"time"
@@ -52,12 +52,17 @@ func (m *UserAnswer) TableName() string {
 	return "user_answers"
 }
 
+var dbq *gorm.DB
+
+func init() {
+	pollingDB, quizDB := database.InitDB()
+	db = pollingDB.Db
+	dbq = quizDB.Db
+}
+
 // Function for get all questions by quiz id
 func GetQuestionByQuizId(id int) (data []QuizQuestion, err error) {
-	db, err := database.GetDB("quiz")
-	if err != nil {
-		return data, err
-	}
+
 	err = db.Raw("SELECT quiz_id FROM quiz_questions WHERE quiz_id = ?", id).Order("number asc").Scan(&data).Error
 	if err != nil {
 		log.Println("Failed to fetch question", err)
@@ -68,11 +73,7 @@ func GetQuestionByQuizId(id int) (data []QuizQuestion, err error) {
 
 // Function for get all choices by question id
 func GetChoiceByQuestionId(ID int) (data []QuizQuestionChoice, err error) {
-	db, err := database.GetDB("quiz")
-	if err != nil {
-		return data, err
-	}
-	err = db.Raw("SELECT question_id FROM quiz_question_choices WHERE question_id = ?", ID).Order("sorting asc").Scan(&data).Error
+	err = dbq.Raw("SELECT question_id FROM quiz_question_choices WHERE question_id = ?", ID).Order("sorting asc").Scan(&data).Error
 	if err != nil {
 		log.Println("Failed to fetch Option", err)
 		return data, err
@@ -81,26 +82,21 @@ func GetChoiceByQuestionId(ID int) (data []QuizQuestionChoice, err error) {
 }
 
 // Function for get all quiz
-func (q *Quiz) GetAll() ([]Quiz, error) {
-	var quizzes []Quiz
-	db, err := database.GetDB("quiz")
-	if err != nil {
-		return quizzes, err
-	}
-	err = db.Find(&quizzes).Error
+func (q *Quiz) GetAll() (quizzes []Quiz, err error) {
+
+
+	err = dbq.Find(&quizzes).Error
 	return quizzes, err
 }
 
 // Function for get question type quiz by question image
 func GetQuestionType(questionImage string) (status bool) {
-	db, err := database.GetDB("quiz")
-	if err != nil {
-		// Handle error jika koneksi database gagal
-		log.Println("Database error:", err)
-		return true
-	}
-	var count int
-	err = db.Raw("SELECT COUNT(*) FROM QuizQuestionChoice WHERE choice_image = ?", questionImage).Scan(&count).Error
+
+	var count QuizQuestion
+	err := dbq.Raw("SELECT * FROM quiz_questions WHERE question_image = ?", questionImage).Scan(&count).Error
+	if err!= nil { 
+        return false
+    }
 	if questionImage == "" {
 		return false
 	}
@@ -109,14 +105,12 @@ func GetQuestionType(questionImage string) (status bool) {
 
 // Function for get choice type quiz by choice image
 func GetChoiceTypeQuiz(choiceImage string) string {
-	db, err := database.GetDB("quiz")
-	if err != nil {
-		// Handle error jika koneksi database gagal
-		log.Println("Database error:", err)
+
+	var count QuizQuestionChoice
+	err := dbq.Raw("SELECT *FROM quiz_question_choices   WHERE choice_image = ?", choiceImage).Scan(&count).Error
+	if err != nil { 
 		return "text"
-	}
-	var count int
-	err = db.Raw("SELECT COUNT(*) FROM QuizQuestionChoice WHERE choice_image = ?", choiceImage).Scan(&count).Error
+    }
 	if choiceImage == "" {
 		return "text"
 	}
@@ -126,39 +120,8 @@ func GetChoiceTypeQuiz(choiceImage string) string {
 // Function for add Quiz
 func AddQuiz(user_id int, quiz_id int, question_id int, choice_id uint) error {
 
-	var userAnswer = UserAnswer{
-		UserID:     user_id,
-		QuizID:     quiz_id,
-		QuestionID: question_id,
-		ChoiceID:   choice_id,
-	}
-
-	db, err := database.GetDB("quiz")
-
-	if err != nil {
-		return err
-	}
-	if err := db.Create(userAnswer).Error; err != nil {
-		log.Println("Failed to add poll:", err)
-		return err
-	}
-
-	return nil
-}
-
-func (uc *UserAnswer) AddQuiz() error {
-	db, err := database.GetDB("quiz")
-	if err != nil {
-		return err
-	}
-	// Check if the user has already polled
-	var existingVote UserAnswer
-	err = db.Raw("SELECT user_id, quiz_id FROM user_answers WHERE user_id = ?, quiz_id = ?", uc.UserID, uc.QuizID).Scan(&existingVote).Error
-	if err == nil {
-		return errors.New("user has already polled")
-	}
-
-	if err := db.Create(uc).Error; err != nil {
+	var ua UserAnswer
+	if err := dbq.Create(ua).Error; err != nil {
 		log.Println("Failed to add poll:", err)
 		return err
 	}
@@ -167,31 +130,21 @@ func (uc *UserAnswer) AddQuiz() error {
 }
 
 // Function for check if user submitted the quiz
-func IsSubmitted(user_id int, quiz_id int) (status bool, err error) {
-	var userAnswer UserAnswer
-	db, err := database.GetDB("quiz")
+func IsSubmitted(userID int, quizID int) (bool, error) {
+	var ua UserAnswer
+	var count int
+	err := dbq.Raw("SELECT COUNT(*) FROM user_answers WHERE user_id = ? AND quiz_id = ?", ua.UserID, ua.QuizID).Scan(&count).Error
 	if err != nil {
 		return false, err
 	}
-	err = db.Where("user_id = ? AND quiz_id = ?", user_id, quiz_id).First(&userAnswer).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return false, err
-	}
-	if err == gorm.ErrRecordNotFound {
-		return false, nil
-	}
-	return true, nil
+	return count > 0, nil
 }
 
 // Function for check if quiz is ended(Unfinished)
 func IsEnded(ID int) (bool, error) {
 	var quiz Quiz
-	db, err := database.GetDB("quiz")
-	if err != nil {
-		return false, err
-	}
 
-	err = db.Where("id = ?", quiz.ID).First(&quiz).Error
+	err := dbq.Raw("SELECT * FROM quiz WHERE id = ?", quiz.ID).Scan(&quiz).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
@@ -201,45 +154,40 @@ func IsEnded(ID int) (bool, error) {
 	return false, nil
 }
 
-// Function for get total quizzes
-func (q *Quiz) GetTotalQuizzes() (int64, error) {
-	db, err := database.GetDB("quiz")
-	if err != nil {
-		return 0, err
-	}
-	var total int64
-	if err = db.Model(&Quiz{}).Count(&total).Error; err != nil {
-		return 0, err
-	}
-	return total, nil
-}
+// // Function for get total quizzes
+// func (q *Quiz) GetTotalQuizzes() (int64, err error) {
+
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	var total int64
+// 	if err = db.Model(&Quiz{}).Count(&total).Error; err != nil {
+// 		return 0, err
+// 	}
+// 	return total, nil
+// }
 
 // Fungsi untuk mendapatkan posisi kuis dan total kuis
-func (q *Quiz) GetQuizPosition() (int, error) {
-	db, err := database.GetDB("quiz")
-	if err != nil {
-		return 0, err
-	}
+// func (q *Quiz) GetQuizPosition() (int, err error) {
 
-	// Fetch quiz questions with their choices
-	var questions []QuizQuestion
-	err = db.Raw("SELECT quiz_id FROM quiz_question WHERE quiz_id = ?", q.ID).Scan(&questions).Error
-	if err != nil {
-		return 0, err
-	}
-	// Determine the current question based on whether it's been answered by the user
-	currentQuestion := 1
-	for _, question := range questions {
-		var userAnswer UserAnswer
-		err = db.Raw("SELECT user_id, question_id FROM user_answers WHERE user_id = ? AND question_id = ?", q.ID, question.ID).Scan(&userAnswer).Error
-		if err != nil && err != gorm.ErrRecordNotFound {
-			return 0, err
-		}
-		if err == gorm.ErrRecordNotFound {
-			break // This is the current question
-		}
-		currentQuestion++
-	}
+	
+// 	err = db.Raw("SELECT quiz_id FROM quiz_question WHERE quiz_id = ?", q.ID).Scan(&questions).Error
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	// Determine the current question based on whether it's been answered by the user
+// 	currentQuestion := 1
+// 	for _, question := range questions {
+// 		var userAnswer UserAnswer
+// 		err = db.Raw("SELECT user_id, question_id FROM user_answers WHERE user_id = ? AND question_id = ?", q.ID, question.ID).Scan(&userAnswer).Error
+// 		if err != nil && err != gorm.ErrRecordNotFound {
+// 			return 0, err
+// 		}
+// 		if err == gorm.ErrRecordNotFound {
+// 			break // This is the current question
+// 		}
+// 		currentQuestion++
+// 	}
 
-	return currentQuestion, nil
-}
+// 	return currentQuestion, nil
+// }

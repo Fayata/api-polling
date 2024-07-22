@@ -1,59 +1,56 @@
 package main
 
 import (
-	"fmt"
-	"log"
+    "fmt"
+    "log"
 
-	"api-polling/application/config/app"
-	"api-polling/application/config/routes"
-	"api-polling/application/models"
+    "api-polling/application/config/app"
+    "api-polling/application/config/routes"
+    "api-polling/application/models"
 
-	"api-polling/system/database"
+    "api-polling/system/database"
 
-	"github.com/joho/godotenv"
+    "github.com/joho/godotenv"
 )
 
 func main() {
-	var (
-		isAutoMigrate = app.Load.Database.AutoMigrate
-	)
-	// Load .env file
-	err := godotenv.Overload()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+    var (
+        isAutoMigrate = app.Load.Database.AutoMigrate
+    )
 
-	// Initialize database connection
-	database.InitDB()
-	database.InitM()
+    // Load .env file
+    err := godotenv.Overload()
+    if err != nil {
+        log.Fatal("Error loading .env file")
+    }
 
-	// AutoMigrate models
-	if isAutoMigrate {
-		db, err := database.GetDB("polling")
-		err = db.AutoMigrate(
-			// &models.User{},
-			&models.Poll{},
-			&models.Poll_Choices{},
-			&models.User_Answer{},
-			&models.Poll_Result{},
-			// &models.Quiz{},
-			// &models.QuizOption{},
-			// &models.UserQuizAnswer{},
-		)
-		if err != nil {
-			log.Fatal("Error migrating database: Polling", err)
-		}
-		dbq, err := database.GetDB("quiz")
-		err = dbq.AutoMigrate(
-			&models.Quiz{},
-			&models.QuizQuestion{},
-			&models.QuizQuestionChoice{},
-			&models.UserAnswer{},
-		)
-		if err != nil{
-			log.Fatal("Error migrating database: Quiz", err)
-		}
-	}
+    // Initialize database connection
+    pollingDB, quizDB := database.InitDB()
+    // defer pollingDB.Db.Close()
+    // defer quizDB.Db.Close()
+
+    // AutoMigrate models
+    if isAutoMigrate {
+        err := pollingDB.Db.AutoMigrate(
+            &models.Poll{},
+            &models.Poll_Choices{},
+            &models.User_Answer{},
+            &models.Poll_Result{},
+        )
+        if err != nil {
+            log.Fatal("Error migrating polling database:", err)
+        }
+
+        err = quizDB.Db.AutoMigrate(
+            &models.Quiz{},
+            &models.QuizQuestion{},
+            &models.QuizQuestionChoice{},
+            &models.UserAnswer{},
+        )
+        if err != nil {
+            log.Fatal("Error migrating quiz database:", err)
+        }
+    }
 	webServer := routes.AppRoute()
 	webServerConfig := fmt.Sprintf("%v:%v", app.Load.WebServer.Host, app.Load.WebServer.Port)
 	webServer.Logger.Fatal(webServer.Start(webServerConfig))

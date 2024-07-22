@@ -53,70 +53,75 @@ type User_Answer struct {
 func (m *User_Answer) TableName() string {
 	return "user_answer"
 }
+var db *gorm.DB
+
+func init() {
+	pollingDB, quizDB := database.InitDB()
+	db = pollingDB.Db
+	dbq = quizDB.Db
+}
 
 ///////////////////CMS////////////////////
 
-func (p *Poll) Create() error {
-	db, err := database.GetDB("polling")
-	if err != nil {
-		return err
-	}
-	// Create polling and its choices in a transaction
-	err = db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(p).Error; err != nil {
-			return err
-		}
-		return nil
-	})
+// func (p *Poll) Create() error {
+	
+// 	var 
+// 	// Create polling and its choices in a transaction
+// 	err = db.Transaction(func(tx *gorm.DB) error {
+// 		if err := tx.Create(p).Error; err != nil {
+// 			return err
+// 		}
+// 		return nil
+// 	})
 
-	if err != nil {
-		log.Println("Gagal membuat polling baru:", err)
-		return err
-	}
+// 	if err != nil {
+// 		log.Println("Gagal membuat polling baru:", err)
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func (p *Poll) Update(id int) error {
-	db, err := database.GetDB("polling")
-	if err != nil {
-		return err
-	}
-	var existingPolling Poll
-	if err = db.First(&existingPolling, id).Error; err != nil {
-		return err
-	}
+// func (p *Poll) Update(id int) error {
+// 	db, err := database.GetDB("polling")
+// 	if err != nil {
+// 		return err
+// 	}
+// 	var existingPolling Poll
+// 	if err = db.First(&existingPolling, id).Error; err != nil {
+// 		return err
+// 	}
 
-	existingPolling.Title = p.Title
-	// existingPolling.Choices = p.Choices
+// 	existingPolling.Title = p.Title
+// 	// existingPolling.Choices = p.Choices
 
-	if err := db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&existingPolling).Error; err != nil {
-		log.Println("Gagal mengupdate data polling:", err)
-		return err
-	}
+// 	if err := db.Session(&gorm.Session{FullSaveAssociations: true}).Updates(&existingPolling).Error; err != nil {
+// 		log.Println("Gagal mengupdate data polling:", err)
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func (p *Poll) Delete(id int) error {
-	db, err := database.GetDB("polling")
-	if err != nil {
-		return err
-	}
-	if err = db.Where("id = ?", id).Delete(&Poll_Choices{}).Error; err != nil {
-		return err
-	}
+// func (p *Poll) Delete(id int) error {
+// 	db, err := database.GetDB("polling")
+// 	if err != nil {
+// 		return err
+// 	}
+// 	if err = db.Where("id = ?", id).Delete(&Poll_Choices{}).Error; err != nil {
+// 		return err
+// 	}
 
-	if err := db.Delete(&Poll{}, id).Error; err != nil {
-		return err
-	}
-	return nil
-}
+// 	if err := db.Delete(&Poll{}, id).Error; err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
 
 ////////////////////USERS///////////////////
 
 func (p *Poll) GetByID(id int) (err error) {
-	db, err := database.GetDB("polling")
+	
 	if err != nil {
 		return db.First(p, id).Error
 	}
@@ -125,22 +130,16 @@ func (p *Poll) GetByID(id int) (err error) {
 
 func (up *Poll) GetAll() ([]Poll, error) {
 	var polls []Poll
-	db, err := database.GetDB("polling")
-	if err != nil {
-		return polls, err
-	}
-	err = db.Find(&polls).Error // Mengambil semua polling
+
+	err := db.Find(&polls).Error // Mengambil semua polling
 	return polls, err
 }
 
 // Fungsi untuk memeriksa apakah polling sudah disubmit dan ended
 func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
 	var userAnswer User_Answer
-	db, err := database.GetDB("polling")
-	if err != nil {
-		return false, err
-	}
-	err = db.Where("user_id = ? AND poll_id = ?", User_Id, Poll_Id).First(&userAnswer).Error
+
+	err = db.Where("user_id = ? AND poll_id = ?", User_Id, Poll_Id).Find(&userAnswer).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
@@ -151,10 +150,7 @@ func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
 }
 func IsEndedPoll(Poll_Id int) (status bool, err error) {
 	var poll Poll
-	db, err := database.GetDB("polling")
-	if err != nil {
-		return false, err
-	}
+
 	err = db.Where("id =?", Poll_Id).First(&poll).Error
 	if err != nil {
 		return false, err
@@ -167,13 +163,10 @@ func IsEndedPoll(Poll_Id int) (status bool, err error) {
 
 // Fungsi untuk mendapatkan persentase vote pada pilihan
 func (pc *Poll_Choices) GetVotePercentage(poll_id int) (float32, error) {
-	db, err := database.GetDB("polling")
-	if err != nil {
-		return 0, err
-	}
+
 	// Hitung total vote untuk poll_id yang sesuai
 	var totalVotes int64
-	if err = db.Model(&User_Answer{}).Where("poll_id = ?", poll_id).Count(&totalVotes).Error; err != nil {
+	if err := db.Model(&User_Answer{}).Where("poll_id = ?", poll_id).Count(&totalVotes).Error; err != nil {
 		return 0, err
 	}
 
@@ -208,15 +201,14 @@ func (p *Poll) GetBannerType() string {
 
 // Function for choice_type polling
 func GetChoiceType(optionType string) string {
-	db, err := database.GetDB("polling")
-	if err != nil {
-		// Handle error jika koneksi database gagal
-		log.Println("Database error:", err)
-		return "text"
-	}
+	
 
-	var count int
-	err = db.Raw("SELECT COUNT(*) FROM poll WHERE option_type = ?", optionType).Scan(&count).Error
+	var count Poll
+	err := db.Raw("SELECT * FROM poll WHERE option_type = ?", optionType).Scan(&count).Error
+	if err!= nil {
+        log.Println("Failed to count poll:", err)
+        return "text"
+    }
 	if optionType == "grid" {
 		return "image"
 	} else if optionType == "list" {
@@ -229,13 +221,10 @@ func GetChoiceType(optionType string) string {
 
 // Fungsi hasil polling berdasarkan ID polling
 func GetPollingResultsByID(poll_id uint) ([]map[string]interface{}, error) {
-	db, err := database.GetDB("polling")
-	if err != nil {
-		return nil, err
-	}
+	
 	// Ambil semua pilihan untuk pollID tertentu
 	var pollChoices []Poll_Choices
-	if err = db.Raw("SELECT poll_id FROM poll_choices WHERE poll_id = ?", poll_id).Scan(&pollChoices).Error; err != nil {
+	if err := db.Raw("SELECT poll_id FROM poll_choices WHERE poll_id = ?", poll_id).Scan(&pollChoices).Error; err != nil {
 		log.Println("Failed to fetch poll choices:", err)
 		return nil, err
 	}
@@ -275,13 +264,10 @@ func GetPollingResultsByID(poll_id uint) ([]map[string]interface{}, error) {
 
 // Function for adding a new poll answer
 func (uc *User_Answer) AddPoll() error {
-	db, err := database.GetDB("polling")
-	if err != nil {
-		return err
-	}
+	
 	// Check if the user has already polled
 	var existingVote User_Answer
-	err = db.Raw("SELECT user_id FROM user_answer WHERE user_id = ? AND poll_id = ?", uc.User_Id, uc.Poll_Id).Scan(&existingVote).Error
+	err := db.Raw("SELECT user_id FROM user_answer WHERE user_id = ? AND poll_id = ?", uc.User_Id, uc.Poll_Id).Scan(&existingVote).Error
 	if err == nil {
 		return errors.New("user has already polled")
 	}

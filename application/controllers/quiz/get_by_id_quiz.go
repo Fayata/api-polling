@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo"
+	"gorm.io/gorm"
 )
 
 type QuestionData struct {
@@ -25,6 +26,14 @@ type QuestionData struct {
 	Type    string                      `json:"type"`
 	Choices []models.QuizQuestionChoice `json:"choices"`
 }
+var dbq *gorm.DB
+
+func init() {
+	pollingDB, quizDB := database.InitDB()
+	dbq = pollingDB.Db
+	dbq = quizDB.Db
+}
+
 
 func GetQuizByID(e echo.Context) error {
 	id, err := strconv.Atoi(e.Param("id"))
@@ -35,11 +44,11 @@ func GetQuizByID(e echo.Context) error {
     var quiz models.Quiz
 
     // Get quiz by ID
-    db, err := database.GetDB("quiz")
+    
     if err != nil {
         return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
     }
-    err = db.First(&quiz, id).Error
+    err = dbq.First(&quiz, id).Error
     if err != nil {
         return echo.NewHTTPError(http.StatusNotFound, "Quiz not found")
     }
@@ -48,7 +57,7 @@ func GetQuizByID(e echo.Context) error {
 
     // Fetch quiz questions
     var questions []models.QuizQuestion
-    err = db.Raw("SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY number ASC", id).Scan(&questions).Error
+    err = dbq.Raw("SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY number ASC", id).Scan(&questions).Error
     if err != nil {
         log.Println("Failed to get questions:", err)
         return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
@@ -63,7 +72,7 @@ func GetQuizByID(e echo.Context) error {
 
         // Fetch choices for the current question
         var choiceDataArr []models.QuizQuestionChoice
-        err = db.Raw("SELECT * FROM quiz_question_choices WHERE question_id = ? ORDER BY sorting ASC", question.ID).Scan(&choiceDataArr).Error
+        err = dbq.Raw("SELECT * FROM quiz_question_choices WHERE question_id = ? ORDER BY sorting ASC", question.ID).Scan(&choiceDataArr).Error
         if err != nil {
             log.Println("Failed to get question choices:", err)
             return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")

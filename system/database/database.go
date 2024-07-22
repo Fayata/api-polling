@@ -10,19 +10,50 @@ import (
     "gorm.io/gorm"
 )
 
-type Database struct{}
+type PollingDB struct {
+    Db *gorm.DB
+}
+
+type QuizDB struct {
+    Db *gorm.DB
+}
 
 type AppConfig struct {
     ImagePath string
     VideoPath string
 }
 
-func InitDB() *Database {
-    return &Database{}
-}
+func InitDB() (*PollingDB, *QuizDB) {
+    loadEnv()
 
-func InitM() *AppConfig {
-    return &AppConfig{}
+    pollingDSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+        os.Getenv("DB_POLLING_USER"),
+        os.Getenv("DB_POLLING_PASSWORD"),
+        os.Getenv("DB_POLLING_HOST"),
+        os.Getenv("DB_POLLING_PORT"),
+        os.Getenv("DB_POLLING_NAME"),
+    )
+    quizDSN := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+        os.Getenv("DB_QUIZ_USER"),
+        os.Getenv("DB_QUIZ_PASSWORD"),
+        os.Getenv("DB_QUIZ_HOST"),
+        os.Getenv("DB_QUIZ_PORT"),
+        os.Getenv("DB_QUIZ_NAME"),
+    )
+
+    pollingDBConnection, err := gorm.Open(mysql.Open(pollingDSN), &gorm.Config{})
+    if err != nil {
+        log.Fatal("Error connecting to polling database:", err)
+    }
+    quizDBConnection, err := gorm.Open(mysql.Open(quizDSN), &gorm.Config{})
+    if err != nil {
+        log.Fatal("Error connecting to quiz database:", err)
+    }
+
+    pollingDB := &PollingDB{Db: pollingDBConnection}
+    quizDB := &QuizDB{Db: quizDBConnection}
+
+    return pollingDB, quizDB
 }
 
 func loadEnv() {
@@ -32,30 +63,12 @@ func loadEnv() {
     }
 }
 
-func GetDB(dbName string) (*gorm.DB, error) {
-    loadEnv()
-    var dsn string
-    switch dbName {
-    case "polling":
-        dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-            os.Getenv("DB_POLLING_USER"),
-            os.Getenv("DB_POLLING_PASSWORD"),
-            os.Getenv("DB_POLLING_HOST"),
-            os.Getenv("DB_POLLING_PORT"),
-            os.Getenv("DB_POLLING_NAME"),
-        )
-    case "quiz":
-        dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-            os.Getenv("DB_QUIZ_USER"),
-            os.Getenv("DB_QUIZ_PASSWORD"),
-            os.Getenv("DB_QUIZ_HOST"),
-            os.Getenv("DB_QUIZ_PORT"),
-            os.Getenv("DB_QUIZ_NAME"),
-        )
-    default:
-        return nil, fmt.Errorf("invalid database name: %s", dbName)
-    }
-    return gorm.Open(mysql.Open(dsn), &gorm.Config{})
+func (d *PollingDB) GetDb() *gorm.DB {
+    return d.Db
+}
+
+func (d *QuizDB) GetDb() *gorm.DB {
+    return d.Db
 }
 
 func Meta() (appConfig AppConfig) {
