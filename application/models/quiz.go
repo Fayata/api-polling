@@ -136,8 +136,7 @@ func AddQuiz(user_id int, quiz_id int, question_id int, choice_id uint) error {
 // Function for check if user submitted the quiz
 func IsSubmitted(userID int, quizID int) (bool, error) {
 	var ua UserAnswer
-	var count int
-	err := dbq.Raw("SELECT * FROM user_answers WHERE user_id = ? AND quiz_id = ?", ua.UserID, ua.QuizID).Scan(&count).Error
+	err := dbq.Where("user_id = ? AND quiz_id = ?", ua.UserID, ua.QuizID).First(&ua).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}

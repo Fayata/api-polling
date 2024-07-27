@@ -140,7 +140,7 @@ func (up *Poll) GetAll() ([]Poll, error) {
 func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
 	var userAnswer User_Answer
 
-	err = db.Where("user_id = ? AND poll_id = ?", User_Id, Poll_Id).First(&userAnswer).Error
+	err = db.Where("user_id = ? AND poll_id = ?", User_Id, Poll_Id).Find(&userAnswer).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
@@ -152,16 +152,16 @@ func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
 func IsEndedPoll(Poll_Id int) (bool,  error) {
 	var poll Poll
 
-	err := db.Raw("SELECT * FROM quiz WHERE id = ?", poll.ID).Scan(&poll).Error
+	err := db.Where("id = ?", poll.ID).Find(&poll).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
 	waktuSaatIni := time.Now()
 
     if waktuSaatIni.After(poll.Start_date) && waktuSaatIni.Before(poll.End_date) {
-        return true, nil
+        return false, nil
     }
-	return false, nil
+	return true, nil
 }
 
 // Fungsi untuk mendapatkan persentase vote pada pilihan
