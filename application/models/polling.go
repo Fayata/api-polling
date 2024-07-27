@@ -140,7 +140,7 @@ func (up *Poll) GetAll() ([]Poll, error) {
 func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
 	var userAnswer User_Answer
 
-	err = db.Where("user_id = ? AND poll_id = ?", User_Id, Poll_Id).Find(&userAnswer).Error
+	err = db.Where("user_id = ? AND poll_id = ?", User_Id, Poll_Id).First(&userAnswer).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
@@ -149,16 +149,18 @@ func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
 	}
 	return true, nil
 }
-func IsEndedPoll(Poll_Id int) (status bool, err error) {
+func IsEndedPoll(Poll_Id int) (bool,  error) {
 	var poll Poll
 
-	err = db.Where("id =?", Poll_Id).Find(&poll).Error
-	if err != nil {
+	err := db.Raw("SELECT * FROM quiz WHERE id = ?", poll.ID).Scan(&poll).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
-	if poll.End_date.Before(time.Now()) || poll.Start_date.After(time.Now()) {
-		return true, nil
-	}
+	waktuSaatIni := time.Now()
+
+    if waktuSaatIni.After(poll.Start_date) && waktuSaatIni.Before(poll.End_date) {
+        return true, nil
+    }
 	return false, nil
 }
 
@@ -221,11 +223,11 @@ func GetChoiceType(optionType string) string {
 }
 
 // Fungsi hasil polling berdasarkan ID polling
-func GetPollingResultsByID(poll_id uint) ([]map[string]interface{}, error) {
+func GetPollingResultsByID(poll_id int) (_[]map[string]interface{}, err error) {
 
     // Ambil semua pilihan untuk pollID tertentu
     var pollChoices []Poll_Choices
-    err := db.Raw("SELECT * FROM poll_choices WHERE poll_id = ?", poll_id).Scan(&pollChoices).Error // Select all columns
+    err = db.Raw("SELECT * FROM poll_choices WHERE poll_id = ?", poll_id).Scan(&pollChoices).Error // Select all columns
     if err != nil {
         log.Println("Failed to fetch poll choices:", err)
         return nil, err

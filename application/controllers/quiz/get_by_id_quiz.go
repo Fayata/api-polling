@@ -26,6 +26,7 @@ type QuestionData struct {
 	Type    string                      `json:"type"`
 	Choices []models.QuizQuestionChoice `json:"choices"`
 }
+
 var dbq *gorm.DB
 
 func init() {
@@ -34,77 +35,76 @@ func init() {
 	dbq = quizDB.Db
 }
 
-
 func GetQuizByID(e echo.Context) error {
 	id, err := strconv.Atoi(e.Param("id"))
-    if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
-    }
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+	}
 
-    var quiz models.Quiz
+	var quiz models.Quiz
 
-    // Get quiz by ID
-    
-    if err != nil {
-        return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
-    }
-    err = dbq.First(&quiz, id).Error
-    if err != nil {
-        return echo.NewHTTPError(http.StatusNotFound, "Quiz not found")
-    }
+	// Get quiz by ID
+
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
+	}
+	err = dbq.First(&quiz, id).Error
+	if err != nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Quiz not found")
+	}
 
 	userID := e.Get("user_id").(int)
 
-    // Fetch quiz questions
-    var questions []models.QuizQuestion
-    err = dbq.Raw("SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY number ASC", id).Scan(&questions).Error
-    if err != nil {
-        log.Println("Failed to get questions:", err)
-        return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
-    }
+	// Fetch quiz questions
+	var questions []models.QuizQuestion
+	err = dbq.Raw("SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY number ASC", id).Scan(&questions).Error
+	if err != nil {
+		log.Println("Failed to get questions:", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+	}
 
-    var questionResults []QuestionData
-    for i, question := range questions {
-        var questionResult QuestionData
-        questionResult.ID = question.ID
-        questionResult.QuestionText = question.QuestionText
-        questionResult.QuizID = question.QuizID
+	var questionResults []QuestionData
+	for i, question := range questions {
+		var questionResult QuestionData
+		questionResult.ID = question.ID
+		questionResult.QuestionText = question.QuestionText
+		questionResult.QuizID = question.QuizID
 
-        // Fetch choices for the current question
-        var choiceDataArr []models.QuizQuestionChoice
-        err = dbq.Raw("SELECT * FROM quiz_question_choices WHERE question_id = ? ORDER BY sorting ASC", question.ID).Scan(&choiceDataArr).Error
-        if err != nil {
-            log.Println("Failed to get question choices:", err)
-            return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
-        }
-        
-        // Determine question type and assign choices
-        questionResult.Choices = choiceDataArr
-        for j, choice := range questionResult.Choices {
-            choiceDataArr[j].QuestionType = models.GetChoiceType(choice.ChoiceImage)
-        }
-        questionResult.Type = models.GetChoiceTypeQuiz(questionResult.Choices[0].ChoiceImage) // Assuming all choices have the same type
+		// Fetch choices for the current question
+		var choiceDataArr []models.QuizQuestionChoice
+		err = dbq.Raw("SELECT * FROM quiz_question_choices WHERE question_id = ? ORDER BY sorting ASC", question.ID).Scan(&choiceDataArr).Error
+		if err != nil {
+			log.Println("Failed to get question choices:", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+		}
 
-        questionResult.Order.Total = len(questions)
-        questionResult.Order.Current = i + 1
+		// Determine question type and assign choices
+		questionResult.Choices = choiceDataArr
+		for j, choice := range questionResult.Choices {
+			choiceDataArr[j].QuestionType = models.GetChoiceType(choice.ChoiceImage)
+		}
+		questionResult.Type = models.GetChoiceTypeQuiz(questionResult.Choices[0].ChoiceImage) // Assuming all choices have the same type
 
-        // Get banner info
-        questionResult.Banner.ShowBanner = models.GetQuestionType(question.QuestionImage)
-        questionResult.Banner.URL = question.QuestionImage
+		questionResult.Order.Total = len(questions)
+		questionResult.Order.Current = i + 1
 
-        questionResults = append(questionResults, questionResult)
-    }
+		// Get banner info
+		questionResult.Banner.ShowBanner = models.GetQuestionType(question.QuestionImage)
+		questionResult.Banner.URL = question.QuestionImage
+
+		questionResults = append(questionResults, questionResult)
+	}
 	isSubmitted, err := models.IsSubmitted(userID, id)
 	if err != nil {
 		log.Println("Error checking submission status:", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
 	}
 
-	isEnded, err := models.IsEnded(id) 
+	isEnded, err := models.IsEnded(id)
 	if err!= nil {
-        log.Println("Error checking end status:", err)
-        return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
-    }
+	    log.Println("Error checking end status:", err)
+	    return echo.NewHTTPError(http.StatusInternalServerError, "Internal server error")
+	}
 
 	//  Get meta data
 	metaData := database.Meta()

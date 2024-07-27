@@ -62,7 +62,6 @@ func init() {
 
 // Function for get all questions by quiz id
 func GetQuestionByQuizId(id int) (data []QuizQuestion, err error) {
-
 	err = db.Raw("SELECT quiz_id FROM quiz_questions WHERE quiz_id = ?", id).Order("number asc").Scan(&data).Error
 	if err != nil {
 		log.Println("Failed to fetch question", err)
@@ -156,10 +155,13 @@ func IsEnded(ID int) (bool, error) {
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
-	if quiz.EndDate.Before(time.Now()) || quiz.StartDate.After(time.Now()) {
-		return true, nil
-	}
+	waktuSaatIni := time.Now()
+
+    if waktuSaatIni.After(quiz.StartDate) && waktuSaatIni.Before(quiz.EndDate) {
+        return true, nil
+    }
 	return false, nil
+
 }
 
 // // Function for get total quizzes
