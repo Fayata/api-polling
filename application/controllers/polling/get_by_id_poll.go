@@ -46,6 +46,7 @@ func ByID(e echo.Context) error {
 	}
 
 	var polling models.Poll
+	var userAnswer models.User_Answer
 
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
@@ -58,6 +59,8 @@ func ByID(e echo.Context) error {
 
 	//Fetch the poll data
 	polling.ID = id
+	userAnswer.ID = userID
+	
 	if err := db.First(&polling, polling).Error; err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "Polling tidak ditemukan")
 	}
@@ -81,12 +84,12 @@ func ByID(e echo.Context) error {
 	// }
 
 	// Check if poll is submitted and ended
-	isSubmitted, err := models.IsSubmittedPoll(userID, polling.ID)
+	isSubmitted, err := models.IsSubmittedPoll(userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error checking submission status")
 	}
 
-	isEnded, err := models.IsEndedPoll(id)
+	isEnded, err := models.IsEndedPoll(polling.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error checking poll end status")
 	}

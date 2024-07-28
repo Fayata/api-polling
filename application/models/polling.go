@@ -137,10 +137,9 @@ func (up *Poll) GetAll() ([]Poll, error) {
 }
 
 // Fungsi untuk memeriksa apakah polling sudah disubmit dan ended
-func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
+func IsSubmittedPoll(User_Id int) (status bool, err error) {
 	var userAnswer User_Answer
-
-	err = db.Where("user_id = ? AND poll_id = ?", User_Id, Poll_Id).Find(&userAnswer).Error
+	err = db.Where("user_id = ?", userAnswer.User_Id).First(&userAnswer).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
@@ -148,20 +147,21 @@ func IsSubmittedPoll(User_Id int, Poll_Id int) (status bool, err error) {
 		return false, nil
 	}
 	return true, nil
+
 }
-func IsEndedPoll(Poll_Id int) (bool,  error) {
+func IsEndedPoll(ID int) (bool, error) {
 	var poll Poll
 
-	err := db.Where("id = ?", poll.ID).Find(&poll).Error
+	err := db.Raw("SELECT id FROM poll WHERE id = ?", poll.ID).Scan(&poll).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return false, err
 	}
 	waktuSaatIni := time.Now()
 
-    if waktuSaatIni.After(poll.Start_date) && waktuSaatIni.Before(poll.End_date) {
-        return false, nil
-    }
-	return true, nil
+	if waktuSaatIni.After(poll.Start_date) && waktuSaatIni.Before(poll.End_date) {
+		return true, nil
+	}
+	return false, nil
 }
 
 // Fungsi untuk mendapatkan persentase vote pada pilihan
@@ -223,47 +223,47 @@ func GetChoiceType(optionType string) string {
 }
 
 // Fungsi hasil polling berdasarkan ID polling
-func GetPollingResultsByID(poll_id int) (_[]map[string]interface{}, err error) {
+func GetPollingResultsByID(poll_id int) (_ []map[string]interface{}, err error) {
 
-    // Ambil semua pilihan untuk pollID tertentu
-    var pollChoices []Poll_Choices
-    err = db.Raw("SELECT * FROM poll_choices WHERE poll_id = ?", poll_id).Scan(&pollChoices).Error // Select all columns
-    if err != nil {
-        log.Println("Failed to fetch poll choices:", err)
-        return nil, err
-    }
+	// Ambil semua pilihan untuk pollID tertentu
+	var pollChoices []Poll_Choices
+	err = db.Raw("SELECT * FROM poll_choices WHERE poll_id = ?", poll_id).Scan(&pollChoices).Error // Select all columns
+	if err != nil {
+		log.Println("Failed to fetch poll choices:", err)
+		return nil, err
+	}
 
-    // Ambil jumlah vote untuk setiap pilihan
-    choiceVotes := make(map[int]int)
-    for _, pc := range pollChoices {
-        voteCount, err := pc.GetVotePercentage(int(poll_id))
-        if err != nil {
-            log.Println("Failed to get vote percentage for choice:", err)
-            return nil, err
-        }
-        choiceVotes[pc.ID] = int(voteCount)
-    }
+	// Ambil jumlah vote untuk setiap pilihan
+	choiceVotes := make(map[int]int)
+	for _, pc := range pollChoices {
+		voteCount, err := pc.GetVotePercentage(int(poll_id))
+		if err != nil {
+			log.Println("Failed to get vote percentage for choice:", err)
+			return nil, err
+		}
+		choiceVotes[pc.ID] = int(voteCount)
+	}
 
-    var polling Poll
-    if err := db.First(&polling, poll_id).Error; err != nil {
-        log.Println("Failed to fetch polling:", err)
-        return nil, err
-    }
+	var polling Poll
+	if err := db.First(&polling, poll_id).Error; err != nil {
+		log.Println("Failed to fetch polling:", err)
+		return nil, err
+	}
 
-    formattedResults := make([]map[string]interface{}, len(pollChoices))
-    for i, pc := range pollChoices {
-        formattedResults[i] = map[string]interface{}{
-            "poll_choice": map[string]interface{}{  // Add comma after "title"
-                "id":           pc.ID,
-                "choice_text":  pc.Choice_text,
-                "choice_image": pc.Choice_image,
-                "title":        polling.Title,
-            },
-            "percentage": choiceVotes[pc.ID],
-        }
-    }
+	formattedResults := make([]map[string]interface{}, len(pollChoices))
+	for i, pc := range pollChoices {
+		formattedResults[i] = map[string]interface{}{
+			"poll_choice": map[string]interface{}{ // Add comma after "title"
+				"id":           pc.ID,
+				"choice_text":  pc.Choice_text,
+				"choice_image": pc.Choice_image,
+				"title":        polling.Title,
+			},
+			"percentage": choiceVotes[pc.ID],
+		}
+	}
 
-    return formattedResults, nil
+	return formattedResults, nil
 }
 
 // Function for adding a new poll answer
