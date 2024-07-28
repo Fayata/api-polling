@@ -137,18 +137,22 @@ func (up *Poll) GetAll() ([]Poll, error) {
 }
 
 // Fungsi untuk memeriksa apakah polling sudah disubmit dan ended
-func IsSubmittedPoll(User_Id int) (status bool, err error) {
+func IsSubmittedPoll(userId int, pollId int) (bool, error) {
 	var userAnswer User_Answer
-	err = db.Where("user_id = ?", userAnswer.User_Id).First(&userAnswer).Error
-	if err != nil && err != gorm.ErrRecordNotFound {
-		return false, err
+	// Query untuk memeriksa apakah ada record dengan user_id dan poll_id yang sesuai
+	err := db.Where("user_id = ? AND poll_id = ?", userId, pollId).First(&userAnswer).Error
+	
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return false, nil // Tidak ditemukan berarti belum disubmit
+		}
+		return false, err // Terjadi kesalahan lain
 	}
-	if err == gorm.ErrRecordNotFound {
-		return false, nil
-	}
+	
+	// Record ditemukan berarti sudah disubmit
 	return true, nil
-
 }
+
 func IsEndedPoll(ID int) (bool, error) {
 	var poll Poll
 

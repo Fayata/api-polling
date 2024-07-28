@@ -84,7 +84,7 @@ func ByID(e echo.Context) error {
 	// }
 
 	// Check if poll is submitted and ended
-	isSubmitted, err := models.IsSubmittedPoll(userID)
+	isSubmitted, err := models.IsSubmittedPoll(userAnswer.User_Id, polling.ID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error checking submission status")
 	}
